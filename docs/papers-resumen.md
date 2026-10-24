@@ -15,5 +15,5 @@ Generaliza el espectro de formas posibles con diagramas de bloque tridimensional
 ## 1967 — Journal of Paleontology 41(1): 43-65
 Aplica el modelo a amonoides. [NO VERIFICADO — requiere Crossref/DOI] Mide un gran número de géneros [NÚMERO NO VERIFICADO] y demuestra que los amonoides ocupan solo una fracción del espacio geométrico posible.
 
-## 1972 — Raup y Graus, Mathematical Geology 4: 307-316 (doi:10.1007/BF02114092)
-General equations for volume and surface area of a logarithmically coiled shell (verificado en Crossref: título, volumen, páginas y autores). Año 1972 según Filin 2026.
+## 1972 — Raup y Graus, Journal of the International Association for Mathematical Geology 4: 307-316 (doi:10.1007/BF02114092)
+General equations for volume and surface area of a logarithmically coiled shell. Título, volumen, páginas, año (1972) y autores (David M. Raup, Richard R. Graus) verificados en Crossref.
