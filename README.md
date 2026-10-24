@@ -1,6 +1,6 @@
 # Modelo Geométrico 🐚 — Modelo de enrollamiento espiral (Raup, 1961-1966)
-# SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com>
-# SPDX-License-Identifier: AGPL-3.0-or-later
+<!-- SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com> -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 
 
 > **¡Hola, explorador!** Este código reproduce la forma de las conchas de caracoles y amonites usando solo cuatro números: **W**, **D**, **T** y **S**. Es el mismo truco matemático que usó el paleontólogo David M. Raup en los años 60.
