@@ -47,13 +47,12 @@ Fronteras de Raup (1966) citadas por Filin, comprobadas algebraicamente a partir
 Filin indica que los valores de T publicados pueden requerir duplicarse para corresponder a la línea central
 (Davoli y Russo 1974; nota en su Fig. 2). Hay que fijar una convención antes de implementar.
 
-## Decisiones abiertas (Pedro)
+## Decisiones confirmadas por Pedro (paso B autorizado)
 
-1. Autorizar o no esta formulación secundaria como base de src/model.py, a contrastar con Raup (1966).
-2. Convención de T: línea central (T = cot beta) o la de Raup sobre la sección completa.
-3. S: elipse con rho = b/a (círculo si rho = 1), o mantener S fuera del modelo por ahora.
-
-> Este archivo no sustituye la lectura de Raup (1966). Hasta que Pedro autorice la decisión 1, no se modifica src/.
+1. Formulacion secundaria de Filin 2026 (S3-S8) autorizada como base de src/model.py; pendiente contraste con Raup (1966).
+2. Convencion T: linea central (T = cot beta).
+3. S: elipse con rho = b/a; circulo si rho = 1.
+4. Rango D: 0 <= D < 1 (documentado, pendiente verificacion primaria).
 
 
 ## Implementacion (paso B)
