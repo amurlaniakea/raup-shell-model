@@ -9,7 +9,7 @@ Implementación en Python del modelo geométrico de enrollamiento espiral. **Lic
 
 ## 🧭 ¿Cómo funciona? (para jóvenes curiosos)
 
-Imagina que tienes una curva generadora (como un círculo pequeño) y la haces girar alrededor de un eje, como si envolvieras un hilo alrededor de un lápiz. Cada vuelta, la curva se hace un poquito más grande (`W`), se aleja un poco del eje (`D`) y sube un poquito (`T`). ¡Así nace cualquier concha espiral!
+Imagina que tienes una curva generadora (como un círculo pequeño) y la haces girar alrededor de un eje, como si envolvieras un hilo alrededor de un lápiz. Cada vuelta, la curva se hace crece exponencialmente (`W` duplica el radio cada vuelta; con `W=2.0` por defecto no es 'un poquito'), se aleja un poco del eje (`D`) y sube un poquito (`T`). ¡Así nace cualquier concha espiral!
 
 ![Espiral de concha con los parámetros W, D y T marcados](assets/concha-espiral.svg)
 
@@ -18,6 +18,7 @@ Imagina que tienes una curva generadora (como un círculo pequeño) y la haces g
 - **T** = traslación (`translation`) → cuánto sube por cada giro, como una escalera de caracol.
 - **S** = forma de la curva generadora → círculo, elipse, etc.
 
+> **⚠️ ESTADO DE IMPLEMENTACIÓN:** `D` (distancia al eje) y `S` (forma generadora) aún no se usan en `generate_curve()`; `T` se aplica linealmente (no autosemejante). La afirmación 'reproduce la forma de las conchas' es aspiracional, no verificada con el código actual.
 > **⚠️ ADVERTENCIA:** Modelo teórico para fines educativos. No sustituye análisis paleontológicos ni geológicos profesionales.
 
 ## 📧 Contacto
@@ -36,5 +37,5 @@ Imagina que tienes una curva generadora (como un círculo pequeño) y la haces g
 ## 📚 Referencias principales
 
 - Raup, D. M. (1961). The Geometry of Coiling in Gastropods. *PNAS*.
-- Raup, D. M. (1965). Theoretical Morphology of the Coiled Shell. *Science*.
+- Raup, D. M., & Michelson, A. (1965). Theoretical Morphology of the Coiled Shell. *Science* 147(3663): 1294-1295.
 - Raup, D. M. (1966). Geometric analysis of shell coiling; general problems. *Journal of Paleontology*.
