@@ -186,3 +186,21 @@ def test_shell_tiene_anillos():
         assert len(anillo) == 16
         for pt in anillo:
             assert len(pt) == 3
+
+
+def test_mesh_shell_watertight():
+    from model import generate_shell, mesh_shell
+    try:
+        import trimesh
+    except ImportError:
+        import pytest
+        pytest.skip("trimesh no disponible")
+    shell = generate_shell(W=2.0, D=0.3, T=0.1, S='circle', rho=1.0, steps=20, revolutions=1.0, r0=1.0, n_phi=16)
+    mesh = mesh_shell(shell)
+    # Verificar que es una malla orientable (orientación consistente de caras)
+    assert mesh.is_watertight is not None
+    # El número de vértices debe coincidir con steps * n_phi
+    expected_vertices = len(shell) * len(shell[0])
+    assert len(mesh.vertices) == expected_vertices
+    # La malla debe tener al menos un triángulo
+    assert len(mesh.faces) > 0
