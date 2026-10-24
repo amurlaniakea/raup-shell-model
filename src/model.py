@@ -21,9 +21,18 @@ Nota de convencion: Filin indica que los valores de T publicados pueden
 requerir duplicarse para corresponder a la linea central (Davoli y Russo 1974).
 """
 import math
+from dataclasses import dataclass
 
 
 VALID_SHAPES = {'circle', 'ellipse'}
+@dataclass
+class CoilingParameters:
+    W: float = 2.0
+    D: float = 0.5
+    T: float = 0.1
+    S: str = 'circle'
+    rho: float = 1.0
+
 
 
 def coiling_params(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0):
@@ -50,7 +59,7 @@ def coiling_params(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0):
     return {'W': float(W), 'D': float(D), 'T': float(T), 'S': S, 'rho': float(rho)}
 
 
-def generate_curve(W=2.0, D=0.5, T=0.1, steps=360, revolutions=2.0, r0=1.0):
+def generate_curve(W: float = 2.0, D: float = 0.5, T: float = 0.1, steps: int = 360, revolutions: float = 2.0, r0: float = 1.0) -> list[list[float]]:
     if not isinstance(steps, int) or not isinstance(steps, (int, float)):
         raise TypeError("steps debe ser int >= 2")
     if isinstance(steps, float) and not steps.is_integer():
@@ -74,7 +83,7 @@ def generate_curve(W=2.0, D=0.5, T=0.1, steps=360, revolutions=2.0, r0=1.0):
     return result
 
 
-def generate_shell(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0, steps=360, revolutions=2.0, r0=1.0, n_phi=64):
+def generate_shell(W: float = 2.0, D: float = 0.5, T: float = 0.1, S: str = 'circle', rho: float = 1.0, steps: int = 360, revolutions: float = 2.0, r0: float = 1.0, n_phi: int = 64) -> list[list[list[float]]]:
     coiling_params(W, D, T, S, rho)
     if not isinstance(n_phi, int):
         raise TypeError("n_phi debe ser int")
@@ -106,7 +115,7 @@ def generate_shell(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0, steps=360, revoluti
     return result
 
 
-def whorl_overlap(W, D, T, rho=1.0):
+def whorl_overlap(W: float, D: float, T: float, rho: float = 1.0) -> bool:
     coiling_params(W, D, T, S='circle', rho=rho)
     if W <= 1:
         # Para W=1: W-1 = 0 => division por cero; la formula de frontera no aplica.
@@ -173,3 +182,50 @@ def mesh_shell(shell_points):
     mesh = trimesh.Trimesh(vertices=vertices, faces=np.array(faces))
     return mesh
 
+
+
+def export_to_stl(shell_points: list, filename: str) -> None:
+    """Construye una malla trimesh.Trimesh a partir de shell_points, suelda vertices duplicados y exporta a STL.
+
+    Args:
+        shell_points: salida de generate_shell (lista de anillos [x,y,z]).
+        filename: ruta de archivo de salida (debe terminar en .stl).
+
+    Raises:
+        ImportError: si trimesh no esta disponible.
+        ValueError: si shell_points tiene menos de 2 anillos o menos de 3 puntos por anillo.
+    """
+    import trimesh
+    import numpy as np
+
+    if len(shell_points) < 2:
+        raise ValueError("shell_points requiere al menos 2 anillos para generar una malla 3D")
+    n_phi = len(shell_points[0]) if len(shell_points) > 0 else 0
+    if n_phi < 3:
+        raise ValueError("shell_points requiere al menos 3 puntos por anillo (n_phi >= 3)")
+
+    # Construir vertices
+    vertices = []
+    for i in range(len(shell_points)):
+        for j in range(n_phi):
+            vertices.append(shell_points[i][j])
+    vertices = np.array(vertices, dtype=np.float64)
+
+    # Construir caras (triangulos entre anillos consecutivos)
+    faces = []
+    steps = len(shell_points)
+    for i in range(steps - 1):
+        for j in range(n_phi):
+            j_next = (j + 1) % n_phi
+            v00 = i * n_phi + j
+            v01 = i * n_phi + j_next
+            v10 = (i + 1) * n_phi + j
+            v11 = (i + 1) * n_phi + j_next
+            # Dos triangulos por cuadrilatero
+            faces.append([v00, v10, v11])
+            faces.append([v00, v11, v01])
+
+    mesh = trimesh.Trimesh(vertices=vertices, faces=np.array(faces, dtype=np.int32))
+    # Soldar vertices duplicados (costura de la concha)
+    mesh.merge_vertices()
+    mesh.export(file_obj=filename, file_type='stl')
