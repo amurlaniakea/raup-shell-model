@@ -74,6 +74,41 @@ El script genera una vista de ejemplo (`assets/readme_banner.png`, borrador en r
 python scripts/render_readme_banner.py
 ```
 
+## 🖼️ Visualización Rápida
+
+El repositorio incluye un script de visualización para ver las conchas en 3D sin necesidad de programar.
+
+### Requisitos
+
+```bash
+pip install matplotlib numpy
+```
+
+### Uso rápido
+
+```bash
+# Galería de 6 morfologías (ventana interactiva)
+python scripts/visualizar.py
+
+# Solo una concha específica
+python scripts/visualizar.py --clasica    # Concha clásica de caracol
+python scripts/visualizar.py --torre      # Torre alta elongada
+python scripts/visualizar.py --plana      # Planispiral (ammonites)
+
+# Guardar como PNG sin abrir ventana
+python scripts/visualizar.py --guardar
+python scripts/visualizar.py --clasica --guardar
+```
+
+### ¿Qué verás?
+
+Una ventana interactiva donde puedes:
+- 🖱️ **Arrastrar** para rotar la concha en 3D
+- 🔍 **Scroll** para hacer zoom
+- 💾 **Botón guardar** para exportar como PNG
+
+> **Nota en WSL:** Si la ventana no se abre, usa `--guardar` y abre el PNG con `explorer.exe nombre_archivo.png`.
+
 ## 📚 Referencias principales
 
 - Raup, D. M. (1961). The Geometry of Coiling in Gastropods. *PNAS* 47(4): 602-609. doi:10.1073/pnas.47.4.602
