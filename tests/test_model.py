@@ -59,15 +59,15 @@ def test_W_uno_constante():
 # ============== PRUEBA 4: D afecta; con D=0 la apertura toca el eje ==============
 
 def test_D_afecta():
-    c1 = generate_shell(W=2.0, D=0.1, T=0.1, steps=20, revolutions=1.0, r0=1.0, n_phi=32)
-    c2 = generate_shell(W=2.0, D=0.9, T=0.1, steps=20, revolutions=1.0, r0=1.0, n_phi=32)
+    c1 = generate_shell(W=2.0, D=0.1, T=0.1, steps=20, revolutions=1.0, r0=1.0, n_phi=33)
+    c2 = generate_shell(W=2.0, D=0.9, T=0.1, steps=20, revolutions=1.0, r0=1.0, n_phi=33)
     primer1 = c1[0]
     primer2 = c2[0]
     assert any(abs(p1[i] - p2[i]) > 1e-6 for p1, p2 in zip(primer1, primer2) for i in range(3))
 
 
 def test_D_cero_toca_eje():
-    shell = generate_shell(W=2.0, D=0.0, T=0.1, steps=10, revolutions=0.5, r0=1.0, n_phi=32)
+    shell = generate_shell(W=2.0, D=0.0, T=0.1, steps=10, revolutions=0.5, r0=1.0, n_phi=33)
     for anillo in shell:
         rs = [math.sqrt(pt[0]**2 + pt[1]**2) for pt in anillo]
         r_min = min(rs)
@@ -80,7 +80,7 @@ def test_extension_axial():
     W, D, T = 2.0, 0.3, 0.1
     rho = 1.5
     r0 = 1.0
-    shell = generate_shell(W=W, D=D, T=T, S='ellipse', rho=rho, steps=5, revolutions=0.5, r0=r0, n_phi=32)
+    shell = generate_shell(W=W, D=D, T=T, S='ellipse', rho=rho, steps=5, revolutions=0.5, r0=r0, n_phi=33)
     primer_anillo = shell[0]
     z_vals = [pt[2] for pt in primer_anillo]
     z_max = max(z_vals)
