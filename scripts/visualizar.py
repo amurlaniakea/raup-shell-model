@@ -15,16 +15,16 @@ Uso rápido:
 Requisitos: matplotlib (ya incluido en extras [viz] del pyproject.toml)
 """
 
-import sys
-import os
 import argparse
+import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import matplotlib
+
 matplotlib.use("Agg")  # Backend sin ventana para --guardar
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 from model import generate_shell
 
