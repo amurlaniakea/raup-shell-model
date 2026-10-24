@@ -183,9 +183,9 @@ def test_validaciones():
 
 def test_compatibilidad_params():
     p = coiling_params(W=2.5, D=0.3, T=0.15)
-    assert p["W"] == 2.5
-    assert p["D"] == 0.3
-    assert p["T"] == 0.15
+    assert p.W == 2.5
+    assert p.D == 0.3
+    assert p.T == 0.15
 
 
 def test_shell_tiene_anillos():

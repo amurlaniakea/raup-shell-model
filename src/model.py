@@ -55,7 +55,7 @@ def coiling_params(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0):
         raise ValueError(f"T >= 0 requerido, recibido T={T}")
     if rho <= 0:
         raise ValueError(f"rho > 0 requerido, recibido rho={rho}")
-    return {'W': float(W), 'D': float(D), 'T': float(T), 'S': S, 'rho': float(rho)}
+    return CoilingParameters(W=float(W), D=float(D), T=float(T), S=S, rho=float(rho))
 
 
 def generate_curve(W: float = 2.0, D: float = 0.5, T: float = 0.1, steps: int = 360, revolutions: float = 2.0, r0: float = 1.0) -> list[list[float]]:
