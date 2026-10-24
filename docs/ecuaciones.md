@@ -54,3 +54,13 @@ Filin indica que los valores de T publicados pueden requerir duplicarse para cor
 3. S: elipse con rho = b/a (círculo si rho = 1), o mantener S fuera del modelo por ahora.
 
 > Este archivo no sustituye la lectura de Raup (1966). Hasta que Pedro autorice la decisión 1, no se modifica src/.
+
+
+## Implementacion (paso B)
+
+- `coiling_params`: valida W>=1, 0<=D<1, T>=0, rho>0, S en {circle,ellipse}; W<1 se rechaza (decision de diseno: contraccion no soportada).
+- `generate_curve`: r(theta) = r0 * W**(theta / (2*pi)); z = T * r (S4, linea central); incluye punto final (steps puntos para 0 a 2*pi*revolutions).
+- `generate_shell`: apertura en plano sagital: R = r + a*cos(phi), Z = z + rho*a*sin(phi) con a = r*(1-D)/(1+D) (S5-S6).
+- `whorl_overlap`: implementacion directa de S8; verificada numericamente con test independiente (geometrico, no cita a Filin como fuente de la equivalencia).
+
+Nota: la equivalencia entre la formula algebraica S8 y la superposicion geometrica de elipses sagitales (test 7) es una derivacion propia verificada numericamente, no una afirmacion de Filin 2026.

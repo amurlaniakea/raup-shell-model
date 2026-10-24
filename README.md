@@ -18,7 +18,7 @@ Imagina que tienes una curva generadora (como un círculo pequeño) y la haces g
 - **T** = traslación (`translation`) → cuánto sube por cada giro, como una escalera de caracol.
 - **S** = forma de la curva generadora → círculo, elipse, etc.
 
-> **⚠️ ESTADO DE IMPLEMENTACIÓN:** `D` (distancia al eje) y `S` (forma generadora) aún no se usan en `generate_curve()`; `T` se aplica linealmente (no autosemejante). La afirmación 'reproduce la forma de las conchas' es aspiracional, no verificada con el código actual.
+> **⚠️ ESTADO DE IMPLEMENTACIÓN (paso B aplicado):** `D` y `S` ya se usan (`generate_shell`, `whorl_overlap`); `z = T*r` (autosemejante), `generate_curve` incluye cierre. La formulación es SECUNDARIA (Filin 2026) y NO ha sido contrastada con Raup (1966) ni validada contra las figuras originales.
 > **⚠️ ADVERTENCIA:** Modelo teórico para fines educativos. No sustituye análisis paleontológicos ni geológicos profesionales.
 
 ## 📧 Contacto
