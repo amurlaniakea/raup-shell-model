@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-# SPDX-FileCopyrightText: 2026 Pedro Sordo Martinez <amurlaniakea@gmail.com>
+# SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """Genera banner cientifico del README (Fase D). Formulacion secundaria Filin 2026; pendiente contraste Raup 1966."""
 
-import sys, os, math
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    import numpy as np
 except ImportError:
     print("ERROR: matplotlib o numpy no disponibles. Instala con: python -m pip install matplotlib numpy")
     sys.exit(1)
@@ -24,13 +25,13 @@ except ImportError as e:
 
 
 def draw_spiral(ax, params, label_text, color_str):
-    W = params["W"]
-    D = params["D"]
-    T = params["T"]
-    S = params["S"]
+    w = params["W"]
+    d = params["D"]
+    t = params["T"]
+    s = params["S"]
     rho = params.get("rho", 1.0)
     shell = generate_shell(
-        W=W, D=D, T=T, S=S, rho=rho,
+        W=w, D=d, T=t, S=s, rho=rho,
         steps=100, revolutions=2.0, r0=1.0, n_phi=32
     )
     for ring in shell:

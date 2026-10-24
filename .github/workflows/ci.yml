@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, paso-b-modelo]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -21,10 +21,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest ruff
-          pip install -e ".[dev]" || pip install -e .
-      - name: Lint with ruff
+          pip install -e ".[dev,mesh,viz]"
+      - name: Lint with ruff (incluye scripts/ y tests/)
         run: |
-          ruff check .
-      - name: Test with pytest
+          ruff check . --output-format=full
+      - name: Verify README image exists
+        run: |
+          test -f assets/readme_banner.png || (echo "Banner no generado"; exit 1)
+      - name: Test with pytest (tests con argumentos por nombre)
         run: pytest -q tests/
