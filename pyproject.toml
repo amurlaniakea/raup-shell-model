@@ -1,28 +1,42 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "raup-shell-model"
 version = "0.1.0"
-license = {text = "AGPL-3.0-or-later"}
+description = "Modelo geométrico de enrollamiento espiral de conchas (Raup), formulación secundaria Filin 2026"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Pedro Sordo Martínez", email = "amurlaniakea@gmail.com" }]
 requires-python = ">=3.11"
+dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff", "mypy"]
 mesh = ["trimesh", "numpy"]
 viz = ["matplotlib"]
+dev = ["pytest", "ruff", "mypy"]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+py-modules = ["model"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 120
-select = ["E", "F", "W", "I", "C90", "N", "UP"]
-ignore = ["E501"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+# W, D, T, S son los nombres convencionales del modelo de Raup
+ignore = ["N802", "N803", "N806"]
 
 [tool.mypy]
 python_version = "3.11"
+mypy_path = "src"
+ignore_missing_imports = true
 warn_return_any = true
 warn_unused_configs = true
-
-[tool.ruff.lint.extend-per-file-ignores]
-"src/*.py" = ["N803", "N806", "C901"]
-"tests/*.py" = ["N803", "N806", "N802"]
