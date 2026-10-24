@@ -63,7 +63,7 @@ def generate_curve(W=2.0, D=0.5, T=0.1, steps=360, revolutions=2.0, r0=1.0):
         raise ValueError(f"r0 > 0 requerido, recibido {r0}")
     result = []
     for i in range(steps):
-        theta = 2 * math.pi * i / (steps - 1) * (revolutions / 2.0)
+        theta = 2 * math.pi * i / (steps - 1) * revolutions
         # Nota: theta va de 0 a 2*pi*revolutions, INCLUYENDO el punto final
         r = r0 * (W ** (theta / (2 * math.pi)))
         x = r * math.cos(theta)
@@ -84,7 +84,7 @@ def generate_shell(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0, steps=360, revoluti
     # Anillos: para cada theta, calcular a y generar puntos de apertura
     result = []  # lista de anillos, cada anillo lista de [x,y,z]
     for i in range(steps):
-        theta = 2 * math.pi * i / (steps - 1) * (revolutions / 2.0)
+        theta = 2 * math.pi * i / (steps - 1) * revolutions
         r = r0 * (W ** (theta / (2 * math.pi)))
         a = r * (1 - D) / (1 + D)
         z_center = T * r
