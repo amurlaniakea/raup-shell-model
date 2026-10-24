@@ -22,7 +22,6 @@ requerir duplicarse para corresponder a la linea central (Davoli y Russo 1974).
 """
 import math
 
-
 VALID_SHAPES = {'circle', 'ellipse'}
 
 

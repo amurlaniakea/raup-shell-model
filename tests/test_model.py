@@ -1,13 +1,16 @@
 # SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import sys, os
+import os
+import sys
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import math
-import pytest
-from model import coiling_params, generate_curve, generate_shell, whorl_overlap
 
+import pytest
+
+from model import coiling_params, generate_curve, generate_shell, whorl_overlap
 
 # ============== PRUEBA 1: Autosemejanza ==============
 
