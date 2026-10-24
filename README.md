@@ -21,6 +21,28 @@ Imagina que tienes una curva generadora (como un círculo pequeño) y la haces g
 > **⚠️ ESTADO DE IMPLEMENTACIÓN (paso B aplicado):** `D` y `S` ya se usan (`generate_shell`, `whorl_overlap`); `z = T*r` (autosemejante), `generate_curve` incluye cierre. La formulación es SECUNDARIA (Filin 2026) y NO ha sido contrastada con Raup (1966) ni validada contra las figuras originales.
 > **⚠️ ADVERTENCIA:** Modelo teórico para fines educativos. No sustituye análisis paleontológicos ni geológicos profesionales.
 
+## 🖼️ Visualización rápida
+
+¿Quieres **ver** conchas en 3D sin escribir código? Hay un visor incluido.
+
+```bash
+pip install matplotlib numpy
+
+python scripts/visualizar.py              # galería de 6 morfologías
+python scripts/visualizar.py --clasica    # caracol clásico
+python scripts/visualizar.py --torre      # torre alta
+python scripts/visualizar.py --plana      # planispiral (T=0)
+python scripts/visualizar.py --guardar    # exporta PNG, sin ventana
+```
+
+Arrastra con el ratón para rotar y usa la rueda para hacer zoom.
+
+> **WSL / servidores sin gráfica:** usa `--guardar` y abre el PNG
+> (`explorer.exe galeria_morfologias.png` en WSL).
+
+La geometría sigue siendo la **formulación secundaria (Filin 2026)**,
+pendiente de contraste con Raup (1966).
+
 ## 📧 Contacto
 
 - **Autor**: Pedro Sordo Martínez

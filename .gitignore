@@ -5,3 +5,5 @@ __pycache__/
 .pytest_cache/
 credentials/
 .hermes/
+concha_*.png
+galeria_morfologias.png
