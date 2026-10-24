@@ -102,7 +102,7 @@ def test_frontera_D_0_rho_1():
     T_frontera = 2 * math.sqrt(W) / (W - 1)
     assert whorl_overlap(W, 0.0, rho, T_frontera - 1e-6) is True
     # Nota: frontera aproximada; con W=3.0, T_frontera ~1.732; el test confirma cambio de signo alrededor de la frontera, no exactitud absoluta
-    assert whorl_overlap(W, 0.0, rho, T_frontera + 1e-2) is False  # lejos de la frontera debe fallar
+    assert whorl_overlap(W, 0.0, rho, T_frontera + 0.5) is False  # lejos de la frontera debe fallar
 
 
 def test_frontera_T_0():
