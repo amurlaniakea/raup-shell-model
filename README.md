@@ -34,6 +34,46 @@ Imagina que tienes una curva generadora (como un círculo pequeño) y la haces g
 - `tests/` — Pruebas con `pytest`
 - `assets/` — Dibujos explicativos
 
+## Que puedes explorar
+
+- Cambiar **W** para ver como crece la espiral (duplicacion aproximada con W=2.0).
+- Cambiar **D** para abrir o cerrar la distancia al eje (D=0 toca el eje).
+- Cambiar **T** para subir la espiral como una escalera de caracol (autosemejanza z = T*r).
+- Cambiar **S** (`circle` o `ellipse`) y **rho** para modificar la forma de la apertura.
+- Ejecutar `python scripts/render_readme_banner.py` para regenerar la imagen principal.
+
+## Matematica del modelo
+
+La formulacion implementada es **SECUNDARIA** (Filin 2026, doi:10.32942/X28Q23, material suplementario S3-S8):
+
+```
+r(theta) = r0 * W**(theta / (2*pi))         (S3, expansion)
+z = T * r  (autosemejanza, linea central; T = cot(beta))   (S4)
+D = (r - a) / (r + a) => a = r*(1-D)/(1+D)  (S5-S6)
+rho = b / a  (razon ejes apertura)        (S5-S6)
+Solapamiento (S8): T**2 < rho**2 * [((1-D)/(1+D))**2*(W+1)**2 - (W-1)**2] / (W-1)**2
+```
+
+> **Nota:** esta formulacion NO ha sido contrastada completamente con Raup (1966, J. Paleontol. 40(5):1178-1190). La fuente primaria debe verificarse antes de considerar el modelo definitivo para analisis paleontologico profesional.
+
+## Estado del proyecto
+
+- **Paso A (higiene):** completado (licencia AGPL-3.0-or-later, cabeceras SPDX, CITATION.cff).
+- **Paso B (modelo):** implementado (`generate_curve`, `generate_shell`, `whorl_overlap`, `mesh_shell`).
+- **Paso C (mesh/visual):** iniciado (`mesh_shell`, `export_to_stl`, banner generado).
+- **Paso D (verificacion):** pendiente contraste con fuente primaria Raup (1966) y auditoria con Claude.
+  Nota: el modelo usa la formulacion secundaria de Filin 2026 (S3-S8); NO ha sido contrastada completamente con Raup (1966, J. Paleontol. 40(5):1178-1190) ni validada contra sus figuras originales.
+
+- **CI:** `.github/workflows/ci.yml` configurado (pytest 3.11-3.13 + ruff).
+
+## Visualizacion
+
+La imagen del banner (`assets/readme_banner.png`) se genera con el modelo propio:
+
+```bash
+python scripts/render_readme_banner.py
+```
+
 ## 📚 Referencias principales
 
 - Raup, D. M. (1961). The Geometry of Coiling in Gastropods. *PNAS*.

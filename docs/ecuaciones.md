@@ -63,3 +63,5 @@ Filin indica que los valores de T publicados pueden requerir duplicarse para cor
 - `whorl_overlap`: implementacion directa de S8; verificada numericamente con test independiente (geometrico, no cita a Filin como fuente de la equivalencia).
 
 Nota: la equivalencia entre la formula algebraica S8 y la superposicion geometrica de elipses sagitales (test 7) es una derivacion propia verificada numericamente, no una afirmacion de Filin 2026.
+
+> **Nota de verificacion pendiente:** esta implementacion usa la formulacion secundaria de Filin 2026 (S3-S8). NO ha sido contrastada completamente con la fuente primaria Raup (1966, J. Paleontol. 40(5):1178-1190) ni validada contra sus figuras originales.
