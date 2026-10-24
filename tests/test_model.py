@@ -98,16 +98,12 @@ def test_extension_axial():
 
 def test_frontera_D_0_rho_1():
     W = 3.0
+    D = 0.0
     rho = 1.0
     T_frontera = 2 * math.sqrt(W) / (W - 1)
-    # La frontera S8 es aproximada; con esta combinacion el solapamiento persiste mas alla de la frontera teorica,
-    # lo que confirma que la formula es aproximada (no un limite exacto). Se documenta sin afirmar exactitud.
-    assert whorl_overlap(W, 0.0, rho, T_frontera - 0.5) is True   # claramente por debajo
-    # Nota: con esta combinacion, T_frontera + 0.5 tambien retorna True, confirmando que la frontera es aproximada.
-    # Se documenta el comportamiento observado sin forzar un False inventado.
-    resultado = whorl_overlap(W, 0.0, rho, T_frontera + 0.5)
-    # No se fuerza False; se documenta el valor real observado para esta combinacion.
-    assert isinstance(resultado, bool)
+    # Frontera verificada con tolerancia estrecha: la formula es exacta en este limite
+    assert whorl_overlap(W=W, D=D, T=T_frontera - 1e-6, rho=rho) is True
+    assert whorl_overlap(W=W, D=D, T=T_frontera + 1e-6, rho=rho) is False
 
 
 def test_frontera_T_0():
