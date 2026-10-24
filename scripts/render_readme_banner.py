@@ -14,7 +14,7 @@ try:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 except ImportError:
-    print("ERROR: matplotlib o numpy no disponibles. Instala con: python -m pip install matplotlib numpy")
+    print("ERROR: matplotlib no disponible. Instala con: python -m pip install -e .[viz]")
     sys.exit(1)
 
 try:
@@ -77,8 +77,11 @@ def main():
     fig.suptitle("Modelo geometrico de conchas espirales - Raup / Filin (formulacion secundaria S3-S8)",
                  fontsize=16, color="white", fontweight="bold", y=1.02)
 
-    fig.text(0.99, 0.01, "Nota: formulacion secundaria (Filin 2026); pendiente contraste con Raup (1966).\nGenerado con scripts/render_readme_banner.py (matplotlib + modelo propio).",
-             fontsize=7, color="#78909c", ha="right", va="bottom")
+    nota = (
+        "Nota: formulacion secundaria (Filin 2026); pendiente contraste con Raup (1966).\n"
+        "Generado con scripts/render_readme_banner.py (matplotlib + modelo propio)."
+    )
+    fig.text(0.99, 0.01, nota, fontsize=7, color="#78909c", ha="right", va="bottom")
 
     output_path = os.path.join(os.path.dirname(__file__), "..", "assets", "readme_banner.png")
     output_path = os.path.abspath(output_path)

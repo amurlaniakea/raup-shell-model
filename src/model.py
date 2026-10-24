@@ -19,62 +19,56 @@ Ecuaciones (S3-S8, Filin 2026):
 
 Nota de convencion: Filin indica que los valores de T publicados pueden
 requerir duplicarse para corresponder a la linea central (Davoli y Russo 1974).
+
+Decisiones de diseno (no proceden de la fuente):
+  * W < 1 (contraccion) se rechaza; W == 1 es valido (circulo / helice degenerada).
+  * S='circle' exige rho == 1; S='ellipse' admite cualquier rho > 0.
+  * whorl_overlap(W=1) devuelve True: las vueltas coinciden (limite W -> 1+ de S8).
 """
+
 import math
 from dataclasses import dataclass
 
+VALID_SHAPES = frozenset({"circle", "ellipse"})
 
-VALID_SHAPES = {'circle', 'ellipse'}
+
 @dataclass
 class CoilingParameters:
     W: float = 2.0
     D: float = 0.5
     T: float = 0.1
-    S: str = 'circle'
+    S: str = "circle"
     rho: float = 1.0
 
 
+def _finite_number(name, value):
+    """Devuelve value como float; rechaza no numericos, bool, NaN e infinitos."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"{name} debe ser numerico, recibido {type(value).__name__}")
+    if not math.isfinite(value):
+        raise ValueError(f"{name} debe ser finito, recibido {value}")
+    return float(value)
 
 
+def _integer(name, value, minimum):
+    """Valida un entero (no bool) >= minimum."""
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TypeError(f"{name} debe ser int, recibido {type(value).__name__}")
+    if value < minimum:
+        raise ValueError(f"{name} >= {minimum} requerido, recibido {value}")
+    return value
 
-def _validate(W, D, T, S, rho):
-    """Validacion comun de parametros del modelo (reutilizada por coiling_params, generate_curve, generate_shell, whorl_overlap)."""
-    import math
-    # Rechaza bool (isinstance(True, int) es True en Python)
-    if isinstance(W, bool) or isinstance(D, bool) or isinstance(T, bool) or isinstance(rho, bool) or isinstance(S, bool):
-        raise TypeError("Los parametros no pueden ser valores booleanos (True/False)")
-    if not isinstance(W, (int, float)) or not isinstance(D, (int, float)) or not isinstance(T, (int, float)) or not isinstance(rho, (int, float)):
-        raise TypeError(f"W, D, T, rho deben ser numericos: W={W}, D={D}, T={T}, rho={rho}")
-    if not math.isfinite(W) or not math.isfinite(D) or not math.isfinite(T) or not math.isfinite(rho):
-        raise ValueError(f"W, D, T, rho deben ser valores finitos (no NaN ni inf): W={W}, D={D}, T={T}, rho={rho}")
-    if W <= 1:
-        raise ValueError(f"W > 1 requerido (W={W}); con W=1 no hay expansion de la espiral")
-    if not (0 <= D < 1):
-        raise ValueError(f"0 <= D < 1 requerido, recibido D={D}")
-    if T < 0:
-        raise ValueError(f"T >= 0 requerido, recibido T={T}")
-    if rho <= 0:
-        raise ValueError(f"rho > 0 requerido, recibido rho={rho}")
+
+def coiling_params(W=2.0, D=0.5, T=0.1, S="circle", rho=1.0):
+    """Valida y agrupa los parametros del modelo. Lanza TypeError o ValueError."""
+    W = _finite_number("W", W)
+    D = _finite_number("D", D)
+    T = _finite_number("T", T)
+    rho = _finite_number("rho", rho)
     if not isinstance(S, str):
-        raise TypeError(f"S debe ser str, recibido {type(S)}")
-    if S not in {'circle', 'ellipse'}:
-        raise ValueError(f"S debe ser 'circle' o 'ellipse', recibido '{S}'")
-    if S == 'circle' and rho != 1.0:
-        raise ValueError(f"S='circle' requiere rho=1.0 (recibido rho={rho})")
-
-def coiling_params(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0):
-    if not isinstance(W, (int, float)):
-        raise TypeError(f"W debe ser numerico, recibido {type(W)}")
-    if not isinstance(D, (int, float)):
-        raise TypeError(f"D debe ser numerico, recibido {type(D)}")
-    if not isinstance(T, (int, float)):
-        raise TypeError(f"T debe ser numerico, recibido {type(T)}")
-    if not isinstance(S, str):
-        raise TypeError(f"S debe ser str, recibido {type(S)}")
+        raise TypeError(f"S debe ser str, recibido {type(S).__name__}")
     if S not in VALID_SHAPES:
-        raise ValueError(f"S debe ser uno de {VALID_SHAPES}, recibido '{S}'")
-    if not isinstance(rho, (int, float)):
-        raise TypeError(f"rho debe ser numerico, recibido {type(rho)}")
+        raise ValueError(f"S debe ser uno de {sorted(VALID_SHAPES)}, recibido '{S}'")
     if W < 1:
         raise ValueError(f"W >= 1 requerido (W={W}); W < 1 implica contraccion, no soportado (decision de diseno)")
     if not (0 <= D < 1):
@@ -83,160 +77,105 @@ def coiling_params(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0):
         raise ValueError(f"T >= 0 requerido, recibido T={T}")
     if rho <= 0:
         raise ValueError(f"rho > 0 requerido, recibido rho={rho}")
-    return {'W': float(W), 'D': float(D), 'T': float(T), 'S': S, 'rho': float(rho)}
+    if S == "circle" and rho != 1.0:
+        raise ValueError(f"S='circle' exige rho == 1, recibido rho={rho}; usa S='ellipse'")
+    return CoilingParameters(W=W, D=D, T=T, S=S, rho=rho)
 
 
-def generate_curve(W: float = 2.0, D: float = 0.5, T: float = 0.1, steps: int = 360, revolutions: float = 2.0, r0: float = 1.0) -> list[list[float]]:
-    # Validacion comun reutilizada
-    if steps < 2:
-        raise ValueError(f"steps >= 2 requerido, recibido {steps}")
+def _sampling(steps, revolutions, r0):
+    steps = _integer("steps", steps, 2)
+    revolutions = _finite_number("revolutions", revolutions)
+    r0 = _finite_number("r0", r0)
     if revolutions <= 0:
         raise ValueError(f"revolutions > 0 requerido, recibido {revolutions}")
     if r0 <= 0:
         raise ValueError(f"r0 > 0 requerido, recibido {r0}")
-    _validate(W, D, T, 'circle', rho)
+    return steps, revolutions, r0
+
+
+def _theta_and_radius(i, steps, revolutions, W, r0):
+    """theta va de 0 a 2*pi*revolutions INCLUYENDO el punto final; r = r0 * W**(theta/2pi)."""
+    theta = 2 * math.pi * revolutions * i / (steps - 1)
+    return theta, r0 * W ** (theta / (2 * math.pi))
+
+
+def generate_curve(W=2.0, D=0.5, T=0.1, steps=360, revolutions=2.0, r0=1.0):
+    """Linea central de la concha: lista de `steps` puntos [x, y, z] con z = T * r."""
+    params = coiling_params(W=W, D=D, T=T)
+    steps, revolutions, r0 = _sampling(steps, revolutions, r0)
     result = []
     for i in range(steps):
-        theta = 2 * math.pi * i / (steps - 1) * revolutions
-        # Nota: theta va de 0 a 2*pi*revolutions, INCLUYENDO el punto final
-        r = r0 * (W ** (theta / (2 * math.pi)))
-        x = r * math.cos(theta)
-        y = r * math.sin(theta)
-        z = T * r
-        result.append([float(x), float(y), float(z)])
+        theta, r = _theta_and_radius(i, steps, revolutions, params.W, r0)
+        result.append([r * math.cos(theta), r * math.sin(theta), params.T * r])
     return result
 
 
-def generate_shell(W: float = 2.0, D: float = 0.5, T: float = 0.1, S: str = 'circle', rho: float = 1.0, steps: int = 360, revolutions: float = 2.0, r0: float = 1.0, n_phi: int = 64) -> list[list[list[float]]]:
-    coiling_params(W, D, T, S, rho)
-    if not isinstance(n_phi, int):
-        raise TypeError("n_phi debe ser int")
-    n_phi = int(n_phi)
-    if n_phi < 3:
-        raise ValueError(f"n_phi >= 3 requerido, recibido {n_phi}")
-    # Linea central (generate_curve ya valida W,D,T)
-    # Anillos: para cada theta, calcular a y generar puntos de apertura
-    result = []  # lista de anillos, cada anillo lista de [x,y,z]
+def generate_shell(W=2.0, D=0.5, T=0.1, S="circle", rho=1.0, steps=360, revolutions=2.0, r0=1.0, n_phi=64):
+    """Superficie de la concha: `steps` anillos de `n_phi` puntos [x, y, z] cada uno.
+
+    La apertura se define en el plano sagital (r, z): R = r + a*cos(phi), Z = T*r + rho*a*sin(phi),
+    con a = r*(1-D)/(1+D). Los puntos de cada anillo NO repiten el primero al final
+    (phi = 2*pi*j/n_phi, j = 0..n_phi-1); la costura se cierra con j_next = (j+1) % n_phi.
+    """
+    params = coiling_params(W=W, D=D, T=T, S=S, rho=rho)
+    steps, revolutions, r0 = _sampling(steps, revolutions, r0)
+    n_phi = _integer("n_phi", n_phi, 3)
+    shell = []
     for i in range(steps):
-        theta = 2 * math.pi * i / (steps - 1) * revolutions
-        r = r0 * (W ** (theta / (2 * math.pi)))
-        a = r * (1 - D) / (1 + D)
-        z_center = T * r
-        anillo = []
+        theta, r = _theta_and_radius(i, steps, revolutions, params.W, r0)
+        a = r * (1 - params.D) / (1 + params.D)
+        z_center = params.T * r
+        ring = []
         for j in range(n_phi):
             phi = 2 * math.pi * j / n_phi
-            # Apertura en plano sagital: R en radial, Z en axial
-            R = r + a * math.cos(phi)
-            Z = z_center + (rho * a) * math.sin(phi) if S == 'ellipse' else z_center
-            # Para 'circle': rho=1, la apertura es circular => R = r + a*cos(phi), Z = z_center + a*sin(phi)
-            # Para consistencia con rho: Z usa rho*a
-            x = R * math.cos(theta)
-            y = R * math.sin(theta)
-            z = Z
-            anillo.append([float(x), float(y), float(z)])
-        result.append(anillo)
-    return result
+            big_r = r + a * math.cos(phi)
+            z = z_center + params.rho * a * math.sin(phi)
+            ring.append([big_r * math.cos(theta), big_r * math.sin(theta), z])
+        shell.append(ring)
+    return shell
 
 
-def whorl_overlap(W: float, D: float, T: float, rho: float = 1.0) -> bool:
-    coiling_params(W, D, T, S='circle', rho=rho)
-    if W <= 1:
-        # Para W=1 o menor: la espiral no crece (W=1 => vueltas coinciden); con T>=0 y D valido no hay solapamiento posible
-        # Por tanto: si W == 1 => no hay solapamiento => retorna True (frontera exacta)
-        return True
-    rhs_numer = ((1 - D) / (1 + D)) ** 2 * (W + 1) ** 2 - (W - 1) ** 2
-    rhs = rho ** 2 * rhs_numer / ((W - 1) ** 2)
-    return (T ** 2) < rhs
+def whorl_overlap(W, D, T, rho=1.0):
+    """True si las aperturas de dos vueltas consecutivas se solapan (S8, Filin 2026).
 
-def mesh_shell(shell_points):
-    """Convierte la salida de generate_shell (lista de anillos [x,y,z]) en una malla trimesh.Trimesh.
-
-    Args:
-        shell_points: resultado de generate_shell (lista de anillos, cada anillo lista de [x,y,z]).
-
-    Returns:
-        trimesh.Trimesh (o None si no está disponible trimesh).
-    Nota: esta es una derivación independiente basada en la formulación secundaria (Filin 2026);
-    pendiente de contraste con la geometría real de Raup (1966).
+    Con W == 1 las vueltas coinciden, asi que devuelve True (limite de S8 cuando W -> 1+, D < 1).
     """
-    try:
-        import trimesh
-    except ImportError:
-        raise ImportError("trimesh es requerido para mesh_shell; instala con: pip install trimesh")
-    import numpy as np
-
-    # shell_points: steps anillos x n_phi puntos
-    steps = len(shell_points)
-    if steps < 2:
-        raise ValueError("mesh_shell requiere al menos 2 anillos (steps >= 2)")
-    n_phi = len(shell_points[0]) if steps > 0 else 0
-    if n_phi < 3:
-        raise ValueError("mesh_shell requiere n_phi >= 3")
-
-    # Construir vértices como array plano: cada punto [x, y, z]
-    vertices = []
-    for i in range(steps):
-        for j in range(n_phi):
-            vertices.append(shell_points[i][j])
-    vertices = np.array(vertices)
-
-    # Construir caras: conectar anillo i con i+1
-    # Para cada par de anillos consecutivos, crear cuadriláteros (o triángulos)
-    # Usamos cuadriláteros simples (2 triángulos por cuadrante para evitar problemas de orientación)
-    faces = []
-    for i in range(steps - 1):
-        for j in range(n_phi):
-            j_next = (j + 1) % n_phi
-            v00 = i * n_phi + j
-            v01 = i * n_phi + j_next
-            v10 = (i + 1) * n_phi + j
-            v11 = (i + 1) * n_phi + j_next
-            # Dos triángulos por cuadrilátero (orientación consistente)
-            faces.append([v00, v10, v11])
-            faces.append([v00, v11, v01])
-
-    # Si queremos que sea watertight, necesitamos también las tapas (primer y último anillo como superficies circulares)
-    # Para simplificar: añadir tapa inicial y final (triangulación radial)
-    # Esto es opcional; para la prueba de watertight asumimos que se cierra con un anillo de cierre
-    # (en esta implementación, la malla es abierta en los extremos a menos que revolutions cierre exactamente)
-    # Para la verificación de watertight, asumimos pasos >= 2 y que los extremos no necesariamente cierran
-    # (como en una hélice cónica abierta); la prueba verificará que sea una superficie orientable.
-
-    mesh = trimesh.Trimesh(vertices=vertices, faces=np.array(faces))
-    return mesh
+    params = coiling_params(W=W, D=D, T=T, S="ellipse", rho=rho)
+    if params.W == 1.0:
+        return True
+    k = (1 - params.D) / (1 + params.D)
+    rhs = params.rho ** 2 * ((k * (params.W + 1)) ** 2 - (params.W - 1) ** 2) / (params.W - 1) ** 2
+    return params.T ** 2 < rhs
 
 
+def _build_mesh(shell_points, cap_ends=False):
+    """Malla trimesh.Trimesh a partir de la salida de generate_shell.
 
-def export_to_stl(shell_points: list, filename: str) -> None:
-    """Construye una malla trimesh.Trimesh a partir de shell_points, suelda vertices duplicados y exporta a STL.
-
-    Args:
-        shell_points: salida de generate_shell (lista de anillos [x,y,z]).
-        filename: ruta de archivo de salida (debe terminar en .stl).
+    Sin tapas la malla es un tubo abierto (is_watertight == False). Con cap_ends=True se cierran
+    ambos extremos con abanicos de triangulos (is_watertight == True). Si whorl_overlap(...) es True,
+    las vueltas se autointersecan y la malla no es un solido valido.
 
     Raises:
-        ImportError: si trimesh no esta disponible.
-        ValueError: si shell_points tiene menos de 2 anillos o menos de 3 puntos por anillo.
+        ImportError: si trimesh o numpy no estan instalados (pip install "raup-shell-model[mesh]").
+        ValueError: con menos de 2 anillos, menos de 3 puntos por anillo o anillos de distinto tamano.
     """
-    import trimesh
-    import numpy as np
+    try:
+        import numpy as np
+        import trimesh
+    except ImportError as exc:
+        raise ImportError('trimesh y numpy son necesarios para la malla: pip install "raup-shell-model[mesh]"') from exc
 
-    if len(shell_points) < 2:
-        raise ValueError("shell_points requiere al menos 2 anillos para generar una malla 3D")
-    n_phi = len(shell_points[0]) if len(shell_points) > 0 else 0
-    if n_phi < 3:
-        raise ValueError("shell_points requiere al menos 3 puntos por anillo (n_phi >= 3)")
-
-    # Construir vertices
-    vertices = []
-    for i in range(len(shell_points)):
-        for j in range(n_phi):
-            vertices.append(shell_points[i][j])
-    vertices = np.array(vertices, dtype=np.float64)
-
-    # Construir caras (triangulos entre anillos consecutivos)
-    faces = []
     steps = len(shell_points)
+    if steps < 2:
+        raise ValueError("se requieren al menos 2 anillos (steps >= 2)")
+    n_phi = len(shell_points[0])
+    if n_phi < 3:
+        raise ValueError("se requieren al menos 3 puntos por anillo (n_phi >= 3)")
+    if any(len(ring) != n_phi for ring in shell_points):
+        raise ValueError("todos los anillos deben tener el mismo numero de puntos")
+
+    vertices = [point for ring in shell_points for point in ring]
+    faces = []
     for i in range(steps - 1):
         for j in range(n_phi):
             j_next = (j + 1) % n_phi
@@ -244,11 +183,32 @@ def export_to_stl(shell_points: list, filename: str) -> None:
             v01 = i * n_phi + j_next
             v10 = (i + 1) * n_phi + j
             v11 = (i + 1) * n_phi + j_next
-            # Dos triangulos por cuadrilatero
             faces.append([v00, v10, v11])
             faces.append([v00, v11, v01])
 
-    mesh = trimesh.Trimesh(vertices=vertices, faces=np.array(faces, dtype=np.int32))
-    # Soldar vertices duplicados (costura de la concha)
-    mesh.merge_vertices()
-    mesh.export(file_obj=filename, file_type='stl')
+    if cap_ends:
+        for ring_index, reverse in ((0, False), (steps - 1, True)):
+            ring = shell_points[ring_index]
+            centroid = [sum(p[k] for p in ring) / n_phi for k in range(3)]
+            centroid_index = len(vertices)
+            vertices.append(centroid)
+            for j in range(n_phi):
+                a = ring_index * n_phi + j
+                b = ring_index * n_phi + (j + 1) % n_phi
+                faces.append([centroid_index, b, a] if reverse else [centroid_index, a, b])
+
+    return trimesh.Trimesh(
+        vertices=np.array(vertices, dtype=np.float64),
+        faces=np.array(faces, dtype=np.int64),
+        process=False,
+    )
+
+
+def mesh_shell(shell_points, cap_ends=False):
+    """Devuelve una trimesh.Trimesh de la concha (ver _build_mesh)."""
+    return _build_mesh(shell_points, cap_ends=cap_ends)
+
+
+def export_to_stl(shell_points, filename, cap_ends=False):
+    """Exporta la concha a un archivo STL (ver _build_mesh para ImportError y ValueError)."""
+    _build_mesh(shell_points, cap_ends=cap_ends).export(file_obj=filename, file_type="stl")

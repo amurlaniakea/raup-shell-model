@@ -1,314 +1,314 @@
 # SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com>
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+"""Tests del modelo. Siempre con argumentos por nombre (W=, D=, T=, rho=) para evitar intercambios."""
 
 import math
+import random
 
 import pytest
 
-from model import coiling_params, generate_curve, generate_shell, whorl_overlap
+from model import (
+    coiling_params,
+    export_to_stl,
+    generate_curve,
+    generate_shell,
+    mesh_shell,
+    whorl_overlap,
+)
 
-# ============== PRUEBA 1: Autosemejanza ==============
+
+def radius(point):
+    return math.hypot(point[0], point[1])
+
+
+# ============== Autosemejanza y linea central ==============
+
 
 def test_autosemejanza():
-    steps = 21
-    revs = 2.0
-    W = 3.0
-    T = 0.15
-    D = 0.3
-    c = generate_curve(W=W, D=D, T=T, steps=steps, revolutions=revs, r0=1.0)
-    N = steps // 2
-    for i in range(len(c) - N):
-        r_i = math.sqrt(c[i][0]**2 + c[i][1]**2)
-        z_i = c[i][2]
-        r_next = math.sqrt(c[i + N][0]**2 + c[i + N][1]**2)
-        z_next = c[i + N][2]
-        assert abs(r_next - W * r_i) < 1e-9
-        assert abs(z_next - W * z_i) < 1e-9
+    W, T, steps = 3.0, 0.15, 21  # steps-1 = 20, revolutions=2 => N=10 puntos por vuelta
+    curve = generate_curve(W=W, D=0.3, T=T, steps=steps, revolutions=2.0, r0=1.0)
+    n = steps // 2
+    for i in range(len(curve) - n):
+        assert abs(radius(curve[i + n]) - W * radius(curve[i])) < 1e-9
+        assert abs(curve[i + n][2] - W * curve[i][2]) < 1e-9
 
 
-# ============== PRUEBA 2: z/r == T; T=0 => z==0 ==============
+def test_curve_incluye_punto_inicial_y_final():
+    curve = generate_curve(W=2.0, D=0.5, T=0.1, steps=5, revolutions=1.0, r0=2.0)
+    assert len(curve) == 5
+    assert curve[0] == pytest.approx([2.0, 0.0, 0.2])
+    assert curve[-1] == pytest.approx([4.0, 0.0, 0.4])  # una vuelta completa: r = r0*W, theta = 2*pi
 
-def test_z_sobre_r():
-    W = 2.5
-    D = 0.2
+
+def test_z_sobre_r_es_T():
     T = 0.4
-    c = generate_curve(W=W, D=D, T=T, steps=50, revolutions=1.5, r0=2.0)
-    for pt in c:
-        r = math.sqrt(pt[0]**2 + pt[1]**2)
-        z = pt[2]
-        assert abs(z / r - T) < 1e-9
+    for point in generate_curve(W=2.5, D=0.2, T=T, steps=50, revolutions=1.5, r0=2.0):
+        assert abs(point[2] / radius(point) - T) < 1e-9
 
 
 def test_T_cero_planispiral():
-    c = generate_curve(W=W, D=D, T=T, steps=50, revolutions=1.0, r0=1.0)
-    for pt in c:
-        assert abs(pt[2]) < 1e-9
+    for point in generate_curve(W=2.0, D=0.3, T=0.0, steps=50, revolutions=1.0, r0=1.0):
+        assert point[2] == 0.0
 
 
-# ============== PRUEBA 3: W=1 => r constante ==============
-
-def test_W_uno_constante():
-    c = generate_curve(W=W, D=D, T=T, steps=30, revolutions=2.0, r0=3.0)
-    rs = [math.sqrt(pt[0]**2 + pt[1]**2) for pt in c]
-    for r in rs:
-        assert abs(r - 3.0) < 1e-6
+def test_W_uno_radio_constante():
+    for point in generate_curve(W=1.0, D=0.4, T=0.2, steps=30, revolutions=2.0, r0=3.0):
+        assert abs(radius(point) - 3.0) < 1e-9
 
 
-# ============== PRUEBA 4: D afecta; con D=0 la apertura toca el eje ==============
-
-def test_D_afecta():
-    c1 = generate_shell(W=W, D=D, T=T, steps=20, revolutions=1.0, r0=1.0, n_phi=64)
-    c2 = generate_shell(W=W, D=D, T=T, steps=20, revolutions=1.0, r0=1.0, n_phi=64)
-    primer1 = c1[0]
-    primer2 = c2[0]
-    assert any(abs(p1[i] - p2[i]) > 1e-6 for p1, p2 in zip(primer1, primer2) for i in range(3))
+# ============== Anillos de la concha ==============
 
 
-def test_D_cero_toca_eje():
-    shell = generate_shell(W=W, D=D, T=T, steps=10, revolutions=0.5, r0=1.0, n_phi=64)
-    for anillo in shell:
-        rs = [math.sqrt(pt[0]**2 + pt[1]**2) for pt in anillo]
-        r_min = min(rs)
-        assert abs(r_min) < 1e-6
+def test_shell_dimensiones():
+    shell = generate_shell(W=2.0, D=0.5, T=0.1, steps=10, revolutions=1.0, n_phi=16)
+    assert len(shell) == 10
+    assert all(len(ring) == 16 and all(len(p) == 3 for p in ring) for ring in shell)
 
 
-# ============== PRUEBA 5: Extension axial = 2*rho*a ==============
-
-def test_extension_axial():
-    W, D, T = 2.0, 0.3, 0.1  # argumentos por nombre (W=W, D=D, T=T) con valores explicitamente pasados
-    rho = 1.5
-    r0 = 1.0
-    W, D, T, S, rho = 2.0, 0.3, 0.1, 'ellipse', 1.5
-        shell = generate_shell(W=W, D=D, T=T, S=S, rho=rho, steps=5, revolutions=0.5, r0=1.0, n_phi=64)
-    primer_anillo = shell[0]
-    z_vals = [pt[2] for pt in primer_anillo]
-    z_max = max(z_vals)
-    z_min = min(z_vals)
-    r = r0
-    a = r * (1 - D) / (1 + D)
-    ext_esperada = 2 * rho * a
-    assert abs((z_max - z_min) - ext_esperada) < 1e-6
+def test_anillo_sin_punto_duplicado():
+    ring = generate_shell(W=2.0, D=0.3, T=0.1, steps=3, revolutions=0.5, n_phi=64)[1]
+    assert max(abs(ring[0][k] - ring[-1][k]) for k in range(3)) > 1e-3
 
 
-# ============== PRUEBA 6: Fronteras Raup (S8, Filin) ==============
+def test_D_afecta_a_la_forma():
+    low = generate_shell(W=2.0, D=0.1, T=0.1, steps=5, revolutions=1.0, n_phi=64)
+    high = generate_shell(W=2.0, D=0.9, T=0.1, steps=5, revolutions=1.0, n_phi=64)
+    ext_low = max(radius(p) for p in low[0]) - min(radius(p) for p in low[0])
+    ext_high = max(radius(p) for p in high[0]) - min(radius(p) for p in high[0])
+    assert ext_low > 2 * ext_high  # a = r(1-D)/(1+D): mucho mayor con D pequeno
+
+
+def test_extension_radial_es_2a():
+    W, D, r0 = 2.0, 0.3, 1.0
+    shell = generate_shell(W=W, D=D, T=0.1, steps=7, revolutions=1.0, r0=r0, n_phi=64)
+    for i, ring in enumerate(shell):
+        r = r0 * W ** (i / 6)
+        a = r * (1 - D) / (1 + D)
+        # los puntos phi=0 y phi=pi estan en el plano del radio: R = r + a y R = r - a
+        assert abs(radius(ring[0]) - (r + a)) < 1e-9
+        assert abs(radius(ring[32]) - (r - a)) < 1e-9
+
+
+def test_D_cero_toca_el_eje():
+    shell = generate_shell(W=2.0, D=0.0, T=0.1, steps=10, revolutions=0.5, r0=1.0, n_phi=64)
+    for ring in shell:
+        assert min(radius(p) for p in ring) < 1e-9
+
+
+def test_extension_axial_es_2_rho_a():
+    W, D, rho = 2.0, 0.3, 1.5
+    shell = generate_shell(W=W, D=D, T=0.1, S="ellipse", rho=rho, steps=5, revolutions=0.5, r0=1.0, n_phi=64)
+    for i, ring in enumerate(shell):
+        r = W ** (0.5 * i / 4)
+        a = r * (1 - D) / (1 + D)
+        zs = [p[2] for p in ring]
+        assert abs((max(zs) - min(zs)) - 2 * rho * a) < 1e-9
+
+
+def test_centroide_del_anillo_sigue_la_linea_central():
+    W, T, steps, revs = 2.5, 0.35, 9, 1.0
+    for S, rho in (("circle", 1.0), ("ellipse", 1.7)):
+        shell = generate_shell(W=W, D=0.2, T=T, S=S, rho=rho, steps=steps, revolutions=revs, r0=1.5, n_phi=32)
+        curve = generate_curve(W=W, D=0.2, T=T, steps=steps, revolutions=revs, r0=1.5)
+        for ring, center in zip(shell, curve):
+            centroid = [sum(p[k] for p in ring) / len(ring) for k in range(3)]
+            assert centroid == pytest.approx(center, abs=1e-9)
+
+
+# ============== Solapamiento de vueltas (S8) ==============
+
 
 def test_frontera_D_0_rho_1():
     W = 3.0
-    D = 0.0
-    rho = 1.0
-    T_frontera = 2 * math.sqrt(W) / (W - 1)
-    # Frontera verificada con tolerancia estrecha: la formula es exacta en este limite
-    assert whorl_overlap(W=W, D=D, T=T_frontera - 1e-6, rho=rho) is True
-    assert whorl_overlap(W=W, D=D, T=T_frontera + 1e-6, rho=rho) is False
+    t_front = 2 * math.sqrt(W) / (W - 1)
+    assert whorl_overlap(W=W, D=0.0, T=t_front - 1e-6, rho=1.0) is True
+    assert whorl_overlap(W=W, D=0.0, T=t_front + 1e-6, rho=1.0) is False
 
 
 def test_frontera_T_0():
     W = 3.0
-    D_frontera = 1.0 / W
-    assert whorl_overlap(W=W, D=D_frontera - 1e-6, T=0.0, rho=1.0) is True
-    assert whorl_overlap(W=W, D=D_frontera + 1e-6, T=0.0, rho=1.0) is False
+    d_front = 1.0 / W
+    assert whorl_overlap(W=W, D=d_front - 1e-6, T=0.0, rho=1.0) is True
+    assert whorl_overlap(W=W, D=d_front + 1e-6, T=0.0, rho=1.0) is False
 
 
-# ============== PRUEBA 7: Verificacion geometrica independiente (S8) ==============
-
-def test_overlap_geometrico_independiente():
-    import random
-    random.seed(42)
-    for _ in range(20):
-        W = 1.5 + random.random() * 3.5
-        D = random.random() * 0.9
-        T = random.random() * 2.0
-        rho = 0.5 + random.random() * 1.5
-        overlap_formula = whorl_overlap(W=W, D=D, T=T, rho=rho)
-        # Verificacion geometrica: apertura original y apertura homotetica
-        r0 = 1.0
-        r = r0
-        a = r * (1 - D) / (1 + D)
-        n_phi = 32
-        puntos_abr = []
-        for j in range(n_phi):
-            phi = 2 * math.pi * j / (n_phi - 1)
-            R = r + a * math.cos(phi)
-            Z = T * r + rho * a * math.sin(phi)
-            puntos_abr.append((R, Z))
-        R_c = W * r
-        Z_c = T * W * r
-        A = W * a
-        B = W * rho * a
-        dentro = False
-        for (R_p, Z_p) in puntos_abr:
-            val = ((R_p - R_c)**2) / (A**2 + 1e-12) + ((Z_p - Z_c)**2) / (B**2 + 1e-12)
-            if val <= 1.01:
-                dentro = True
-                break
-        assert overlap_formula == dentro, f"Discrepancia: W={W}, D={D}, T={T}, rho={rho}: formula={overlap_formula}, geo={dentro}"
+def test_W_uno_solapa_y_es_continuo_con_W_cercano():
+    assert whorl_overlap(W=1.0, D=0.3, T=0.1) is True
+    assert whorl_overlap(W=1.0001, D=0.3, T=0.1) is True
 
 
-# ============== PRUEBA 8: Validaciones ==============
+def _geometric_overlap(W, D, T, rho, n=2000):
+    """Segunda implementacion, sin usar S8: la elipse sagital de una vuelta, escalada por W respecto
+    al polo, ya contiene algun punto del borde de la elipse de la vuelta anterior?
+    (La mayor siempre contiene a la menor o corta su borde, por homotecia.)"""
+    r = 1.0
+    a = r * (1 - D) / (1 + D)
+    b = rho * a
+    center_r, center_z = W * r, W * T * r
+    for k in range(n):
+        phi = 2 * math.pi * k / n
+        rr, zz = r + a * math.cos(phi), T * r + b * math.sin(phi)
+        if ((rr - center_r) / (W * a)) ** 2 + ((zz - center_z) / (W * b)) ** 2 <= 1.0:
+            return True
+    return False
 
-def test_validaciones():
+
+def test_overlap_coincide_con_geometria_independiente():
+    rng = random.Random(7)
+    seen = {True: 0, False: 0}
+    checked = 0
+    while checked < 150:
+        W = 1.2 + rng.random() * 3.5
+        D = rng.random() * 0.8
+        T = rng.random() * 3.0
+        rho = 0.5 + rng.random() * 1.5
+        k = (1 - D) / (1 + D)
+        rhs = rho**2 * ((k * (W + 1)) ** 2 - (W - 1) ** 2) / (W - 1) ** 2
+        boundary = math.sqrt(rhs) if rhs > 0 else 0.0
+        if abs(T - boundary) < 0.03 * max(boundary, 0.1):
+            continue  # demasiado cerca de la frontera para la discretizacion del borde
+        formula = whorl_overlap(W=W, D=D, T=T, rho=rho)
+        assert formula == _geometric_overlap(W, D, T, rho), (W, D, T, rho)
+        seen[formula] += 1
+        checked += 1
+    assert seen[True] > 10 and seen[False] > 10  # el test ejercita ambos resultados
+
+
+# ============== Validacion ==============
+
+
+@pytest.mark.parametrize(
+    "kwargs, error",
+    [
+        ({"W": 0.5}, ValueError),
+        ({"W": -1.0}, ValueError),
+        ({"W": "dos"}, TypeError),
+        ({"W": True}, TypeError),
+        ({"W": float("nan")}, ValueError),
+        ({"W": float("inf")}, ValueError),
+        ({"D": 1.0}, ValueError),
+        ({"D": 1.5}, ValueError),
+        ({"D": -0.1}, ValueError),
+        ({"D": "medio"}, TypeError),
+        ({"D": float("nan")}, ValueError),
+        ({"T": -0.1}, ValueError),
+        ({"T": float("nan")}, ValueError),
+        ({"rho": 0}, ValueError),
+        ({"rho": -2.0}, ValueError),
+        ({"S": "square"}, ValueError),
+        ({"S": 3}, TypeError),
+        ({"S": "circle", "rho": 2.0}, ValueError),
+    ],
+)
+def test_coiling_params_rechaza(kwargs, error):
+    with pytest.raises(error):
+        coiling_params(**kwargs)
+
+
+@pytest.mark.parametrize(
+    "kwargs, error",
+    [
+        ({"steps": 1}, ValueError),
+        ({"steps": 0}, ValueError),
+        ({"steps": 2.5}, TypeError),
+        ({"steps": 2.0}, TypeError),
+        ({"steps": True}, TypeError),
+        ({"revolutions": -0.5}, ValueError),
+        ({"revolutions": 0}, ValueError),
+        ({"revolutions": float("nan")}, ValueError),
+        ({"r0": -1}, ValueError),
+        ({"r0": 0}, ValueError),
+        ({"W": 0.5}, ValueError),
+        ({"D": 5.0}, ValueError),
+        ({"T": -3.0}, ValueError),
+    ],
+)
+def test_generate_curve_y_shell_rechazan(kwargs, error):
+    with pytest.raises(error):
+        generate_curve(**kwargs)
+    with pytest.raises(error):
+        generate_shell(**kwargs)
+
+
+@pytest.mark.parametrize("n_phi, error", [(2, ValueError), (0, ValueError), (3.5, TypeError), (True, TypeError)])
+def test_shell_rechaza_n_phi(n_phi, error):
+    with pytest.raises(error):
+        generate_shell(W=2.0, D=0.3, T=0.1, steps=4, n_phi=n_phi)
+
+
+def test_whorl_overlap_valida_entradas():
     with pytest.raises(ValueError):
-        coiling_params(W=0.5)
+        whorl_overlap(W=0.5, D=0.3, T=0.1)
+    with pytest.raises(ValueError):
+        whorl_overlap(W=2.0, D=0.3, T=0.1, rho=0.0)
     with pytest.raises(TypeError):
-        coiling_params(W="dos")
-    with pytest.raises(ValueError):
-        coiling_params(D=1.5)
-    with pytest.raises(ValueError):
-        coiling_params(T=-0.1)
-    with pytest.raises(TypeError):
-        coiling_params(D="medio")
-    with pytest.raises(ValueError):
-        coiling_params(rho=0)
-    with pytest.raises(ValueError):
-        coiling_params(S='square')
-    with pytest.raises(ValueError):
-        generate_curve(steps=1)
-    with pytest.raises(ValueError):
-        generate_curve(revolutions=-0.5)
-    with pytest.raises(ValueError):
-        generate_curve(r0=-1)
-    with pytest.raises(ValueError):
-        generate_shell(n_phi=2)
+        whorl_overlap(W="2", D=0.3, T=0.1)
 
-
-# ============== PRUEBA 9 (compatibilidad) ==============
 
 def test_compatibilidad_params():
-    p = coiling_params(W=W, D=D, T=T)
-    assert p.W == 2.5
-    assert p.D == 0.3
-    assert p.T == 0.15
+    p = coiling_params(W=2.5, D=0.3, T=0.15)
+    assert (p.W, p.D, p.T, p.S, p.rho) == (2.5, 0.3, 0.15, "circle", 1.0)
 
 
-def test_shell_tiene_anillos():
-    shell = generate_shell(steps=10, revolutions=1.0, n_phi=16)
-    assert len(shell) == 10
-    for anillo in shell:
-        assert len(anillo) == 16
-        for pt in anillo:
-            assert len(pt) == 3
+# ============== Malla (requiere trimesh y numpy) ==============
 
 
-def test_mesh_shell_watertight():
-    import importlib.util
-
-    from model import generate_shell, mesh_shell
-    if importlib.util.find_spec("trimesh") is None:
-        import pytest
-        pytest.skip("trimesh no disponible")
-    shell = generate_shell(W=W, D=D, T=T, S=S, rho=rho, steps=20, revolutions=1.0, r0=1.0, n_phi=16)
-    mesh = mesh_shell(shell)
-    # Verificar que es una malla orientable (orientación consistente de caras)
-    assert mesh.is_watertight is not None
-    # El número de vértices debe coincidir con steps * n_phi
-    expected_vertices = len(shell) * len(shell[0])
-    # trimesh puede fusionar vertices duplicados en los bordes circulares; se verifica que sea cercano, no exacto
-    assert abs(len(mesh.vertices) - expected_vertices) <= len(shell)  # tolerancia por fusion de vertices (steps = len(shell))
-    # La malla debe tener al menos un triángulo
-    assert len(mesh.faces) > 0
+@pytest.fixture
+def small_shell():
+    return generate_shell(W=2.0, D=0.3, T=0.1, steps=20, revolutions=1.0, r0=1.0, n_phi=16)
 
 
-def test_export_stl_creates_file():
-    import os
-    import tempfile
-
-    from model import export_to_stl, generate_shell
-    shell = generate_shell(W=W, D=D, T=T, S=S, rho=rho, steps=10, revolutions=0.5, r0=1.0, n_phi=8)
-    with tempfile.NamedTemporaryFile(suffix=".stl", delete=False) as tmp:
-        tmp_path = tmp.name
-    try:
-        export_to_stl(shell, tmp_path)
-        assert os.path.exists(tmp_path), f"El archivo STL {tmp_path} no fue creado"
-        assert os.path.getsize(tmp_path) > 0, f"El archivo STL {tmp_path} esta vacio"
-    finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+def test_mesh_conteos_y_sin_caras_degeneradas(small_shell):
+    pytest.importorskip("trimesh")
+    mesh = mesh_shell(small_shell)
+    steps, n_phi = len(small_shell), len(small_shell[0])
+    assert len(mesh.vertices) == steps * n_phi
+    assert len(mesh.faces) == 2 * n_phi * (steps - 1)
+    assert int((mesh.area_faces < 1e-12).sum()) == 0
+    assert mesh.is_watertight is False  # tubo abierto, documentado
 
 
-def test_z_center_igual_T_por_r():
-    # La media de z de cada anillo debe ser aproximadamente T*r (autosemejanza)
-    W, D, T = 2.5, 0.3, 0.1  # argumentos por nombre (W=W, D=D, T=T) con valores explicitamente pasados  # argumentos por nombre (W=W, D=D, T=T) con valores explicitamente pasados  # argumentos por nombre (W=W, D=D, T=T) con valores explicitamente pasados  # argumentos por nombre (W=W, D=D, T=T) con valores explicitamente pasados5
-    r0 = 1.0
-    W, D, T, S, rho = 2.0, 0.3, 0.1, 'circle', 1.0
-        r0 = 1.0
-        shell = generate_shell(W=W, D=D, T=T, S=S, rho=rho, steps=30, revolutions=1.0, r0=r0, n_phi=32)
-    for anillo in shell:
-        r_approx = sum(math.sqrt(pt[0]**2 + pt[1]**2) for pt in anillo) / len(anillo)
-        z_center = sum(pt[2] for pt in anillo) / len(anillo)
-        assert abs(z_center - T * r_approx) < 1e-6
+def test_mesh_con_tapas_es_estanca(small_shell):
+    pytest.importorskip("trimesh")
+    mesh = mesh_shell(small_shell, cap_ends=True)
+    steps, n_phi = len(small_shell), len(small_shell[0])
+    assert len(mesh.vertices) == steps * n_phi + 2
+    assert len(mesh.faces) == 2 * n_phi * (steps - 1) + 2 * n_phi
+    assert mesh.is_watertight is True
+    assert mesh.is_winding_consistent is True
 
 
-def test_W_1_0_vs_1_0001():
-    # Con W=1, la espiral no crece; con W=1.0001, debe crecer ligeramente
-    W, D, T = 1.0, 0.0, 0.0
-    shell_1 = generate_shell(W=W, D=D, T=T, steps=10, revolutions=0.5, r0=1.0, n_phi=16)
-    W2, D2, T2 = 1.0001, 0.0, 0.0
-    shell_10001 = generate_shell(W=W2, D=D2, T=T2, steps=10, revolutions=0.5, r0=1.0, n_phi=16)
-    # El primer anillo debe ser igual (r_0=1.0); el segundo debe ser ligeramente mayor con W=1.0001
-    assert len(shell_1) == len(shell_10001)
-    # Verificar que los radios del primer anillo son iguales (r0=1.0)
-    r_1 = math.sqrt(sum(pt[0]**2 + pt[1]**2 for pt in shell_1[0]) / len(shell_1[0]))
-    r_10001 = math.sqrt(sum(pt[0]**2 + pt[1]**2 for pt in shell_10001[0]) / len(shell_10001[0]))
-    assert abs(r_1 - 1.0) < 1e-6
-    assert abs(r_10001 - 1.0) < 1e-6
-    # Verificar que el ultimo anillo de W=1.0001 es mayor que el de W=1.0
-    r_1_final = sum(math.sqrt(pt[0]**2 + pt[1]**2) for pt in shell_1[-1]) / len(shell_1[-1])
-    r_10001_final = sum(math.sqrt(pt[0]**2 + pt[1]**2) for pt in shell_10001[-1]) / len(shell_10001[-1])
-    assert r_10001_final > r_1_final
+def test_mesh_valida_entradas(small_shell):
+    pytest.importorskip("trimesh")
+    with pytest.raises(ValueError):
+        mesh_shell(small_shell[:1])
+    with pytest.raises(ValueError):
+        mesh_shell([ring[:2] for ring in small_shell])
+    with pytest.raises(ValueError):
+        mesh_shell([small_shell[0], small_shell[1][:-1]])
 
 
-def test_whorl_overlap_W_1_0_true():
-    # Con W=1 las vueltas coinciden; con T>=0 y D en rango valido, no hay solapamiento => True
-    W, D, T, rho = 1.0, 0.0, 0.0, 1.0
-    assert whorl_overlap(W=W, D=D, T=T, rho=rho) is True
-    # Comparacion con W=1.0001 (debe ser False porque hay expansion ligera => posible solapamiento con T>0)
-    # Nota: con T=0 y D=0, W=1.0001 => False (no hay solapamiento porque T=0 => planispiral)
-    W2, D2, T2, rho2 = 1.0001, 0.0, 0.0, 1.0
-    assert whorl_overlap(W=W2, D=D2, T=T2, rho=rho2) is False
+def test_stl_exportado_conserva_las_caras(small_shell, tmp_path):
+    trimesh = pytest.importorskip("trimesh")
+    path = tmp_path / "concha.stl"
+    export_to_stl(small_shell, str(path))
+    assert path.stat().st_size > 0
+    loaded = trimesh.load(str(path))
+    steps, n_phi = len(small_shell), len(small_shell[0])
+    assert len(loaded.faces) == 2 * n_phi * (steps - 1)
 
 
-def test_mutante_W_1_0():
-    # Si se ignora W==1 en whorl_overlap (retornando False en lugar de True), este test falla
-    W, D, T, rho = 1.0, 0.0, 0.0, 1.0
-        assert whorl_overlap(W=W, D=D, T=T, rho=rho) is True
+def test_mesh_sin_trimesh_da_import_error(small_shell, monkeypatch):
+    import builtins
 
+    real_import = builtins.__import__
 
-def test_stl_numero_caras():
-    # Verifica que el archivo STL exportado tiene el numero esperado de caras
-    import importlib.util
-    import os
-    import tempfile
-    if importlib.util.find_spec("trimesh") is None:
-        import pytest
-        pytest.skip("trimesh no disponible")
-    from model import export_to_stl, generate_shell
-    shell = generate_shell(W=W, D=D, T=T, S=S, rho=rho, steps=20, revolutions=1.0, r0=1.0, n_phi=16)
-    with tempfile.NamedTemporaryFile(suffix=".stl", delete=False) as tmp:
-        tmp_path = tmp.name
-    try:
-        export_to_stl(shell, tmp_path)
-        import trimesh
-        mesh = trimesh.load(tmp_path)
-        # El archivo debe tener caras (2*n_phi*(steps-1) = 2*16*19 = 608)
-        assert len(mesh.faces) == 608, f"Caras esperadas: 608, obtenidas: {len(mesh.faces)}"
-        # Ninguna cara debe ser degenerada
-        areas = mesh.area_faces
-        assert (areas < 1e-12).sum() == 0, f"Caras degeneradas: {(areas < 1e-12).sum()}"
-    finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+    def fake_import(name, *args, **kwargs):
+        if name in ("trimesh", "numpy"):
+            raise ImportError(name)
+        return real_import(name, *args, **kwargs)
 
-
-def test_S_circle_rho_no_1_falla():
-    # Si S='circle' con rho != 1, debe fallar con ValueError (segun regla de diseno confirmada por Pedro)
-    try:
-        W, D, T, S = 2.0, 0.0, 0.1, 'circle'
-        coiling_params(W=W, D=D, T=T, S=S, rho=1.5)
-        assert False, "Se esperaba ValueError por S='circle' con rho!=1"
-    except ValueError as e:
-        assert "rho=1.0" in str(e), f"Mensaje de error no menciona rho=1.0: {e}"
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    with pytest.raises(ImportError, match="raup-shell-model"):
+        mesh_shell(small_shell)
