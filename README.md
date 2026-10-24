@@ -1,9 +1,9 @@
-# Modelo Geométrico 🐚 — Modelo de enrollamiento espiral (Raup, 1961-1966)
+# Modelo Geometrico de Conchas Espirales Geométrico 🐚 — Modelo de enrollamiento espiral (Raup, 1961-1966)
 <!-- SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com> -->
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 
 
-> **¡Hola, explorador!** Este código reproduce la forma de las conchas de caracoles y amonites usando solo cuatro números: **W**, **D**, **T** y **S**. Es el mismo truco matemático que usó el paleontólogo David M. Raup en los años 60.
+> **¡Hola, explorador!** Este código aproxima la forma de apertura de conchas espirales (modelo teorico, pendiente de contraste con figuras originales) de caracoles y amonites usando solo cuatro números: **W**, **D**, **T** y **S**. Es el mismo truco matemático que usó el paleontólogo David M. Raup en los años 60.
 
 Implementación en Python del modelo geométrico de enrollamiento espiral. **Licencia:** AGPL-3.0-or-later. Ver [LICENSE](LICENSE).
 
@@ -11,7 +11,7 @@ Implementación en Python del modelo geométrico de enrollamiento espiral. **Lic
 
 Imagina que tienes una curva generadora (como un círculo pequeño) y la haces girar alrededor de un eje, como si envolvieras un hilo alrededor de un lápiz. Cada vuelta, la curva crece exponencialmente (`W` multiplica el radio por `W` en cada vuelta; con `W=2.0`, el valor por defecto, lo duplica, así que no es 'un poquito'), se aleja un poco del eje (`D`) y sube un poquito (`T`). ¡Así nace cualquier concha espiral!
 
-![Espiral de concha con los parámetros W, D y T marcados](assets/concha-espiral.svg)
+![Espiral de concha con los parámetros W, D y T marcados](assets/concha-espiral.svg (archivo pendiente; no se regenera en esta fase; se recomienda usar assets/readme_banner.png para la imagen principal) (pendiente de regeneracion desde el modelo; el archivo actual corresponde a una version anterior))
 
 - **W** = expansión (`whorl expansion rate`) → la concha crece más rápido.
 - **D** = distancia al eje → qué tan "abierta" está la espiral.
@@ -36,7 +36,7 @@ Imagina que tienes una curva generadora (como un círculo pequeño) y la haces g
 
 ## Que puedes explorar
 
-- Cambiar **W** para ver como crece la espiral (duplicacion aproximada con W=2.0).
+- Cambiar **W** para ver como crece la espiral (duplicacion exacta con W=2.0).
 - Cambiar **D** para abrir o cerrar la distancia al eje (D=0 toca el eje).
 - Cambiar **T** para subir la espiral como una escalera de caracol (autosemejanza z = T*r).
 - Cambiar **S** (`circle` o `ellipse`) y **rho** para modificar la forma de la apertura.
@@ -59,7 +59,7 @@ Solapamiento (S8): T**2 < rho**2 * [((1-D)/(1+D))**2*(W+1)**2 - (W-1)**2] / (W-1
 ## Estado del proyecto
 
 - **Paso A (higiene):** completado (licencia AGPL-3.0-or-later, cabeceras SPDX, CITATION.cff).
-- **Paso B (modelo):** implementado (`generate_curve`, `generate_shell`, `whorl_overlap`, `mesh_shell`).
+- **Paso B (modelo):** implementado (`generate_curve`, `generate_shell`, `whorl_overlap`, `_build_mesh`, `mesh_shell`, `export_to_stl`). Nota: con `W=2.0` el radio se duplica exactamente (`r[i+N] = W*r[i]` con `revolutions` entero).
 - **Paso C (mesh/visual):** iniciado (`mesh_shell`, `export_to_stl`, banner generado).
 - **Paso D (verificacion):** pendiente contraste con fuente primaria Raup (1966) y auditoria con Claude.
   Nota: el modelo usa la formulacion secundaria de Filin 2026 (S3-S8); NO ha sido contrastada completamente con Raup (1966, J. Paleontol. 40(5):1178-1190) ni validada contra sus figuras originales.

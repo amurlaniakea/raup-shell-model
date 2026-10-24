@@ -23,6 +23,7 @@ requerir duplicarse para corresponder a la linea central (Davoli y Russo 1974).
 import math
 from dataclasses import dataclass
 
+
 VALID_SHAPES = {'circle', 'ellipse'}
 @dataclass
 class CoilingParameters:
@@ -33,6 +34,33 @@ class CoilingParameters:
     rho: float = 1.0
 
 
+
+
+
+def _validate(W, D, T, S, rho):
+    """Validacion comun de parametros del modelo (reutilizada por coiling_params, generate_curve, generate_shell, whorl_overlap)."""
+    import math
+    # Rechaza bool (isinstance(True, int) es True en Python)
+    if isinstance(W, bool) or isinstance(D, bool) or isinstance(T, bool) or isinstance(rho, bool) or isinstance(S, bool):
+        raise TypeError("Los parametros no pueden ser valores booleanos (True/False)")
+    if not isinstance(W, (int, float)) or not isinstance(D, (int, float)) or not isinstance(T, (int, float)) or not isinstance(rho, (int, float)):
+        raise TypeError(f"W, D, T, rho deben ser numericos: W={W}, D={D}, T={T}, rho={rho}")
+    if not math.isfinite(W) or not math.isfinite(D) or not math.isfinite(T) or not math.isfinite(rho):
+        raise ValueError(f"W, D, T, rho deben ser valores finitos (no NaN ni inf): W={W}, D={D}, T={T}, rho={rho}")
+    if W <= 1:
+        raise ValueError(f"W > 1 requerido (W={W}); con W=1 no hay expansion de la espiral")
+    if not (0 <= D < 1):
+        raise ValueError(f"0 <= D < 1 requerido, recibido D={D}")
+    if T < 0:
+        raise ValueError(f"T >= 0 requerido, recibido T={T}")
+    if rho <= 0:
+        raise ValueError(f"rho > 0 requerido, recibido rho={rho}")
+    if not isinstance(S, str):
+        raise TypeError(f"S debe ser str, recibido {type(S)}")
+    if S not in {'circle', 'ellipse'}:
+        raise ValueError(f"S debe ser 'circle' o 'ellipse', recibido '{S}'")
+    if S == 'circle' and rho != 1.0:
+        raise ValueError(f"S='circle' requiere rho=1.0 (recibido rho={rho})")
 
 def coiling_params(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0):
     if not isinstance(W, (int, float)):
@@ -55,21 +83,18 @@ def coiling_params(W=2.0, D=0.5, T=0.1, S='circle', rho=1.0):
         raise ValueError(f"T >= 0 requerido, recibido T={T}")
     if rho <= 0:
         raise ValueError(f"rho > 0 requerido, recibido rho={rho}")
-    return CoilingParameters(W=float(W), D=float(D), T=float(T), S=S, rho=float(rho))
+    return {'W': float(W), 'D': float(D), 'T': float(T), 'S': S, 'rho': float(rho)}
 
 
 def generate_curve(W: float = 2.0, D: float = 0.5, T: float = 0.1, steps: int = 360, revolutions: float = 2.0, r0: float = 1.0) -> list[list[float]]:
-    if not isinstance(steps, int) or not isinstance(steps, (int, float)):
-        raise TypeError("steps debe ser int >= 2")
-    if isinstance(steps, float) and not steps.is_integer():
-        raise TypeError("steps debe ser entero")
-    steps = int(steps)
+    # Validacion comun reutilizada
     if steps < 2:
         raise ValueError(f"steps >= 2 requerido, recibido {steps}")
     if revolutions <= 0:
         raise ValueError(f"revolutions > 0 requerido, recibido {revolutions}")
     if r0 <= 0:
         raise ValueError(f"r0 > 0 requerido, recibido {r0}")
+    _validate(W, D, T, 'circle', rho)
     result = []
     for i in range(steps):
         theta = 2 * math.pi * i / (steps - 1) * revolutions
@@ -99,13 +124,12 @@ def generate_shell(W: float = 2.0, D: float = 0.5, T: float = 0.1, S: str = 'cir
         z_center = T * r
         anillo = []
         for j in range(n_phi):
-            phi = 2 * math.pi * j / (n_phi - 1)
+            phi = 2 * math.pi * j / n_phi
             # Apertura en plano sagital: R en radial, Z en axial
             R = r + a * math.cos(phi)
             Z = z_center + (rho * a) * math.sin(phi) if S == 'ellipse' else z_center
             # Para 'circle': rho=1, la apertura es circular => R = r + a*cos(phi), Z = z_center + a*sin(phi)
             # Para consistencia con rho: Z usa rho*a
-            Z = z_center + (rho * a) * math.sin(phi)
             x = R * math.cos(theta)
             y = R * math.sin(theta)
             z = Z
@@ -117,9 +141,9 @@ def generate_shell(W: float = 2.0, D: float = 0.5, T: float = 0.1, S: str = 'cir
 def whorl_overlap(W: float, D: float, T: float, rho: float = 1.0) -> bool:
     coiling_params(W, D, T, S='circle', rho=rho)
     if W <= 1:
-        # Para W=1: W-1 = 0 => division por cero; la formula de frontera no aplica.
-        # Si W == 1, la espiral no crece => no hay solapamiento posible (T>=0)
-        return False
+        # Para W=1 o menor: la espiral no crece (W=1 => vueltas coinciden); con T>=0 y D valido no hay solapamiento posible
+        # Por tanto: si W == 1 => no hay solapamiento => retorna True (frontera exacta)
+        return True
     rhs_numer = ((1 - D) / (1 + D)) ** 2 * (W + 1) ** 2 - (W - 1) ** 2
     rhs = rho ** 2 * rhs_numer / ((W - 1) ** 2)
     return (T ** 2) < rhs
