@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com>
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Resúmenes — Trabajos clave de David M. Raup
 
 ## 1961 — PNAS 47(4): 602-609

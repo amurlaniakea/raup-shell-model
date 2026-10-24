@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "Si utilizas este trabajo, cita al autor."
+type: software
+title: "Modelo geométrico de enrollamiento espiral (Raup)"
+author:
+  family-names: "Sordo Martínez"
+  given-names: "Pedro"
+  email: "amurlaniakea@gmail.com"
+license: AGPL-3.0-or-later
+repository-code: "https://github.com/amurlaniakea/raup-shell-model"
