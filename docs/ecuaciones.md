@@ -1,46 +1,56 @@
 <!-- SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com> -->
 <!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 
-# Ecuaciones del modelo de Raup — Estado: borrador preliminar
+# Ecuaciones del modelo de Raup — borrador con fuente secundaria
 
-> Regla de honestidad aplicada: cada ecuación indica su fuente y su estado.
-> NO se completa ninguna fórmula de memoria.
+> Regla: cada ecuación indica su fuente y su estado. No se completa ninguna fórmula de memoria.
+> Estado general: SECUNDARIA. Ninguna ecuación de este archivo se ha leído en Raup (1961, 1966).
 
-## Estado de las fuentes primarias (verificado hoy)
+## Acceso a las fuentes primarias (intento del 24-10-2026)
 
-- PNAS 47(4):602-609 (Raup, 1961): fuente inaccesible (HTTP 403 desde este entorno). No se extrae ninguna ecuación. Estado: NO VERIFICADA.
-- Science 147(3663):1294-1295 (Raup & Michelson, 1965): fuente inaccesible (HTTP 403). No se extrae ninguna ecuación. Estado: NO VERIFICADA.
-- Journal of Paleontology 40(5):1178-1190 (Raup, 1966): JSTOR devuelve 200, contenido no extraído (limitacion del entorno). Estado: NO LEÍDO, aunque el DOI/URL existe.
+- Raup (1961), PNAS 47(4): 602-609, doi:10.1073/pnas.47.4.602: HTTP 403 desde el entorno del implementador. NO LEÍDA.
+- Raup y Michelson (1965), Science 147(3663): 1294-1295, doi:10.1126/science.147.3663.1294: HTTP 403. NO LEÍDA.
+- Raup (1966), J. Paleontol. 40(5): 1178-1190: JSTOR responde, pero no se pudo extraer el contenido. NO LEÍDA.
+  Es la fuente primaria probable de la formulación completa; PNAS 1961 es una versión previa (según Filin 2026).
 
-## Fuente primaria probable vs fuentes secundarias
+## Fuente secundaria utilizada
 
-- Fuente primaria probable: Raup 1966 (J. Paleontol. 40(5):1178-1190). PNAS 1961 es una version previa; no debe usarse como unica referencia para la formulacion completa.
-- Fuente secundaria citada: Filin 2026 (doi:10.32942/X28Q23, preprint). Menciona tan beta = 1/T y gamma = ln W / 2*pi. Titulo y paginas completos: NO VERIFICADOS. No es fuente primaria; no basta para implementar.
+Filin, I. (2026). Lead and slant on the geometry of coiling in gastropods. Preprint de EcoEvoRxiv, v3 (28-05-2026),
+doi:10.32942/X28Q23. Un solo autor; no revisado por pares. Las ecuaciones proceden de su material suplementario,
+sección S3 (Eqs. S3-S8). Se usa solo como formulación de trabajo y debe contrastarse con Raup (1966).
 
-## Definiciones de parametros (reconstruccion parcial — NO VERIFICADA)
+## Formulación (SECUNDARIA)
 
-Esto procede de docs/parametros-rau.md (archivo sin tilde) y de conocimiento general, NO lectura primaria:
+```
+W = exp(2*pi*gamma)       (S3)  =>  r(theta) = r0 * W^(theta / (2*pi))
+T = cot(beta)             (S4)  =>  z = T * r        (hélice cónica: r = z * tan(beta))
+D = (r - a) / (r + a)     (S5)  =>  a  = r * (1 - D) / (1 + D)         (S6)
+                                    xi = r - a = r * 2D / (1 + D)      (radio interior, S6)
+rho = b / a                     (razón de ejes de la abertura; a radial, b axial)
+Solapamiento (S8):  T^2 < rho^2 * [ ((1-D)/(1+D))^2 * (W+1)^2 - (W-1)^2 ] / (W-1)^2
+```
 
-- W (whorl expansion rate): tasa de expansion por vuelta. NO VERIFICADO su definición exacta (por revolucion completa 2*pi? por unidad de angulo?).
-- D: distancia del eje relativa a la curva generadora. Rango sugerido 0 <= D < 1 en la documentacion, NO VERIFICADO con la fuente primaria.
-- T (translation): traslacion vertical. La relación propuesta por la fuente secundaria es proporcional al radio (autosemejanza); el código actual usa z = T*theta (lineal), que contradice la autosemejanza. Estado: EN CONFLICTO con el código y pendiente de verificacion primaria.
-- S (shape): forma de la curva generadora (circulo, elipse). NO IMPLEMENTADO en generate_curve(); rango válido no confirmado.
-- Sistema de coordenadas: se asume cilíndrico (r, theta, z) con r exponencial. NO VERIFICADO.
+Fronteras de Raup (1966) citadas por Filin, comprobadas algebraicamente a partir de S8:
 
-## Ecuaciones propuestas (NO VERIFICADAS — pendiente de fuente primaria)
+- D = 0 y rho = 1: T = 2*sqrt(W) / (W - 1)
+- T = 0: D < 1/W
 
-Ninguna ecuación se escribe completa porque ninguna fuente primaria fue leida. Cuando se abran, insertar aqui con referencia exacta (articulo, figura, pagina):
+## Contraste con src/model.py
 
-1. Ecuacion de r(theta) con W.
-2. Relacion z(r) o z(theta) con T (autosemejante vs lineal).
-3. Efecto de D en la geometria (distancia relativa al eje).
-4. Definicion de la curva generadora con S (circulo, elipse).
+- `r = W ** (theta / (2*pi))`: coherente con S3.
+- `z = T * theta`: INCOMPATIBLE. La formulación exige z proporcional a r (autosemejanza).
+- `D`: se ignora. Según S5-S6 fija el tamaño de la abertura; rango 0 <= D < 1 (D = 0: la abertura toca el eje).
+- `S`: se ignora. Según Filin, Raup nunca lo define con precisión; es habitual usar la razón de ejes de una elipse.
 
-## Decisiones abiertas (Pedro debe confirmar antes del paso B)
+## Advertencia de convención
 
-1. Confirmar que JP 1966 es la fuente primaria para estas ecuaciones; si PNAS 1961 cubre una parte, marcar que parte corresponde a cada articulo.
-2. Confirmar rango válido de D (documentacion sugiere 0 <= D < 1; es interpretacion de Raup o posterior?).
-3. Confirmar si T debe ser proporcional al radio (autosemejanza) o si la formulacion lineal tiene alguna justificacion en Raup.
-4. Confirmar si S acepta solo circle y ellipse, o si hay mas formas descritas en la fuente primaria.
+Filin indica que los valores de T publicados pueden requerir duplicarse para corresponder a la línea central
+(Davoli y Russo 1974; nota en su Fig. 2). Hay que fijar una convención antes de implementar.
 
-> Este archivo NO debe considerarse fuente valida para escribir src/model.py. El paso B no debe arrancar hasta que al menos las ecuaciones 1-3 tengan referencia primaria verificada.
+## Decisiones abiertas (Pedro)
+
+1. Autorizar o no esta formulación secundaria como base de src/model.py, a contrastar con Raup (1966).
+2. Convención de T: línea central (T = cot beta) o la de Raup sobre la sección completa.
+3. S: elipse con rho = b/a (círculo si rho = 1), o mantener S fuera del modelo por ahora.
+
+> Este archivo no sustituye la lectura de Raup (1966). Hasta que Pedro autorice la decisión 1, no se modifica src/.
