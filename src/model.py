@@ -28,6 +28,7 @@ Decisiones de diseno (no proceden de la fuente):
 
 import math
 from dataclasses import dataclass
+from typing import Any
 
 VALID_SHAPES = frozenset({"circle", "ellipse"})
 
@@ -41,7 +42,7 @@ class CoilingParameters:
     rho: float = 1.0
 
 
-def _finite_number(name, value):
+def _finite_number(name: str, value: object) -> float:
     """Devuelve value como float; rechaza no numericos, bool, NaN e infinitos."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise TypeError(f"{name} debe ser numerico, recibido {type(value).__name__}")
@@ -50,7 +51,7 @@ def _finite_number(name, value):
     return float(value)
 
 
-def _integer(name, value, minimum):
+def _integer(name: str, value: object, minimum: int) -> int:
     """Valida un entero (no bool) >= minimum."""
     if isinstance(value, bool) or not isinstance(value, int):
         raise TypeError(f"{name} debe ser int, recibido {type(value).__name__}")
@@ -59,7 +60,9 @@ def _integer(name, value, minimum):
     return value
 
 
-def coiling_params(W=2.0, D=0.5, T=0.1, S="circle", rho=1.0):
+def coiling_params(
+    W: float = 2.0, D: float = 0.5, T: float = 0.1, S: str = "circle", rho: float = 1.0
+) -> CoilingParameters:
     """Valida y agrupa los parametros del modelo. Lanza TypeError o ValueError."""
     W = _finite_number("W", W)
     D = _finite_number("D", D)
@@ -82,7 +85,7 @@ def coiling_params(W=2.0, D=0.5, T=0.1, S="circle", rho=1.0):
     return CoilingParameters(W=W, D=D, T=T, S=S, rho=rho)
 
 
-def _sampling(steps, revolutions, r0):
+def _sampling(steps: int, revolutions: float, r0: float) -> tuple[int, float, float]:
     steps = _integer("steps", steps, 2)
     revolutions = _finite_number("revolutions", revolutions)
     r0 = _finite_number("r0", r0)
@@ -93,24 +96,36 @@ def _sampling(steps, revolutions, r0):
     return steps, revolutions, r0
 
 
-def _theta_and_radius(i, steps, revolutions, W, r0):
+def _theta_and_radius(i: int, steps: int, revolutions: float, W: float, r0: float) -> tuple[float, float]:
     """theta va de 0 a 2*pi*revolutions INCLUYENDO el punto final; r = r0 * W**(theta/2pi)."""
     theta = 2 * math.pi * revolutions * i / (steps - 1)
     return theta, r0 * W ** (theta / (2 * math.pi))
 
 
-def generate_curve(W=2.0, D=0.5, T=0.1, steps=360, revolutions=2.0, r0=1.0):
+def generate_curve(
+    W: float = 2.0, D: float = 0.5, T: float = 0.1, steps: int = 360, revolutions: float = 2.0, r0: float = 1.0
+) -> list[list[float]]:
     """Linea central de la concha: lista de `steps` puntos [x, y, z] con z = T * r."""
     params = coiling_params(W=W, D=D, T=T)
     steps, revolutions, r0 = _sampling(steps, revolutions, r0)
-    result = []
+    result: list[list[float]] = []
     for i in range(steps):
         theta, r = _theta_and_radius(i, steps, revolutions, params.W, r0)
         result.append([r * math.cos(theta), r * math.sin(theta), params.T * r])
     return result
 
 
-def generate_shell(W=2.0, D=0.5, T=0.1, S="circle", rho=1.0, steps=360, revolutions=2.0, r0=1.0, n_phi=64):
+def generate_shell(
+    W: float = 2.0,
+    D: float = 0.5,
+    T: float = 0.1,
+    S: str = "circle",
+    rho: float = 1.0,
+    steps: int = 360,
+    revolutions: float = 2.0,
+    r0: float = 1.0,
+    n_phi: int = 64,
+) -> list[list[list[float]]]:
     """Superficie de la concha: `steps` anillos de `n_phi` puntos [x, y, z] cada uno.
 
     La apertura se define en el plano sagital (r, z): R = r + a*cos(phi), Z = T*r + rho*a*sin(phi),
@@ -120,12 +135,12 @@ def generate_shell(W=2.0, D=0.5, T=0.1, S="circle", rho=1.0, steps=360, revoluti
     params = coiling_params(W=W, D=D, T=T, S=S, rho=rho)
     steps, revolutions, r0 = _sampling(steps, revolutions, r0)
     n_phi = _integer("n_phi", n_phi, 3)
-    shell = []
+    shell: list[list[list[float]]] = []
     for i in range(steps):
         theta, r = _theta_and_radius(i, steps, revolutions, params.W, r0)
         a = r * (1 - params.D) / (1 + params.D)
         z_center = params.T * r
-        ring = []
+        ring: list[list[float]] = []
         for j in range(n_phi):
             phi = 2 * math.pi * j / n_phi
             big_r = r + a * math.cos(phi)
@@ -135,7 +150,7 @@ def generate_shell(W=2.0, D=0.5, T=0.1, S="circle", rho=1.0, steps=360, revoluti
     return shell
 
 
-def whorl_overlap(W, D, T, rho=1.0):
+def whorl_overlap(W: float, D: float, T: float, rho: float = 1.0) -> bool:
     """True si las aperturas de dos vueltas consecutivas se solapan (S8, Filin 2026).
 
     Con W == 1 las vueltas coinciden, asi que devuelve True (limite de S8 cuando W -> 1+, D < 1).
@@ -148,7 +163,7 @@ def whorl_overlap(W, D, T, rho=1.0):
     return params.T ** 2 < rhs
 
 
-def _build_mesh(shell_points, cap_ends=False):
+def _build_mesh(shell_points: list[list[list[float]]], cap_ends: bool = False) -> Any:
     """Malla trimesh.Trimesh a partir de la salida de generate_shell.
 
     Sin tapas la malla es un tubo abierto (is_watertight == False). Con cap_ends=True se cierran
@@ -204,11 +219,11 @@ def _build_mesh(shell_points, cap_ends=False):
     )
 
 
-def mesh_shell(shell_points, cap_ends=False):
+def mesh_shell(shell_points: list[list[list[float]]], cap_ends: bool = False) -> Any:
     """Devuelve una trimesh.Trimesh de la concha (ver _build_mesh)."""
     return _build_mesh(shell_points, cap_ends=cap_ends)
 
 
-def export_to_stl(shell_points, filename, cap_ends=False):
+def export_to_stl(shell_points: list[list[list[float]]], filename: str, cap_ends: bool = False) -> None:
     """Exporta la concha a un archivo STL (ver _build_mesh para ImportError y ValueError)."""
     _build_mesh(shell_points, cap_ends=cap_ends).export(file_obj=filename, file_type="stl")

@@ -16,7 +16,7 @@ dependencies = []
 [project.optional-dependencies]
 mesh = ["trimesh", "numpy"]
 viz = ["matplotlib"]
-dev = ["pytest", "ruff"]
+dev = ["pytest", "ruff", "mypy"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -33,3 +33,10 @@ line-length = 120
 select = ["E", "F", "I", "N", "W"]
 # W, D, T, S son los nombres convencionales del modelo de Raup
 ignore = ["N802", "N803", "N806"]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "src"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
