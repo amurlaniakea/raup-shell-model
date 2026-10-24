@@ -62,6 +62,9 @@ Filin indica que los valores de T publicados pueden requerir duplicarse para cor
 - `generate_shell`: apertura en plano sagital: R = r + a*cos(phi), Z = z + rho*a*sin(phi) con a = r*(1-D)/(1+D) (S5-S6).
 - `whorl_overlap`: implementacion directa de S8; verificada numericamente con test independiente (geometrico, no cita a Filin como fuente de la equivalencia).
 
+- Decisiones de diseno (no proceden de la fuente): W < 1 se rechaza; `S='circle'` exige rho = 1; `whorl_overlap(W=1)` devuelve True (limite de S8 cuando W -> 1+). Los anillos de `generate_shell` no repiten el primer punto (phi = 2*pi*j/n_phi); `cap_ends=True` cierra la malla con tapas.
+- Equivalencia de S8 con la geometria: S8 es exactamente la condicion de que la elipse sagital de una vuelta y su homotetica por W respecto al polo se solapen (suma de Minkowski de elipses homoteticas). `tests/test_model.py::test_overlap_coincide_con_geometria_independiente` lo comprueba con una segunda implementacion que no usa S8.
+
 Nota: la equivalencia entre la formula algebraica S8 y la superposicion geometrica de elipses sagitales (test 7) es una derivacion propia verificada numericamente, no una afirmacion de Filin 2026.
 
 > **Nota de verificacion pendiente:** esta implementacion usa la formulacion secundaria de Filin 2026 (S3-S8). NO ha sido contrastada completamente con la fuente primaria Raup (1966, J. Paleontol. 40(5):1178-1190) ni validada contra sus figuras originales.
