@@ -4,40 +4,43 @@
 # Ecuaciones del modelo de Raup — Estado: borrador preliminar
 
 > Regla de honestidad aplicada: cada ecuación indica su fuente y su estado.
-> NO se completa ninguna formula de memoria.
+> NO se completa ninguna fórmula de memoria.
 
 ## Estado de las fuentes primarias (verificado hoy)
 
-- PNAS 47(4):602-609 (Raup, 1961): fuente inaccesible (HTTP 403). No se extrae ninguna ecuación.
-- Science 147(3663):1294-1295 (Raup & Michelson, 1965): fuente inaccesible (HTTP 403). No se extrae ninguna ecuación.
-- Journal of Paleontology 40(5):1178-1190 (Raup, 1966): JSTOR devuelve 200, contenido no extraido (tool limitado). Estado: NO LEIDO.
+- PNAS 47(4):602-609 (Raup, 1961): fuente inaccesible (HTTP 403 desde este entorno). No se extrae ninguna ecuación. Estado: NO VERIFICADA.
+- Science 147(3663):1294-1295 (Raup & Michelson, 1965): fuente inaccesible (HTTP 403). No se extrae ninguna ecuación. Estado: NO VERIFICADA.
+- Journal of Paleontology 40(5):1178-1190 (Raup, 1966): JSTOR devuelve 200, contenido no extraído (limitacion del entorno). Estado: NO LEÍDO, aunque el DOI/URL existe.
 
-## Definiciones de parámetros (reconstruccion parcial — NO VERIFICADA)
+## Fuente primaria probable vs fuentes secundarias
 
-Esto procede de docs/parámetros-rau.md y conocimiento general, NO lectura primaria:
+- Fuente primaria probable: Raup 1966 (J. Paleontol. 40(5):1178-1190). PNAS 1961 es una version previa; no debe usarse como unica referencia para la formulacion completa.
+- Fuente secundaria citada: Filin 2026 (doi:10.32942/X28Q23, preprint). Menciona tan beta = 1/T y gamma = ln W / 2*pi. Titulo y paginas completos: NO VERIFICADOS. No es fuente primaria; no basta para implementar.
 
-- W (whorl expansión rate): por vuelta. NO VERIFICADO su definición exacta (por revolución completa 2*pi? por unidad de ángulo?).
-- D: distancia relativa al eje. Rango sugerido 0 <= D < 1 en doc, NO VERIFICADO con fuente primaria.
-- T (translation): proporción de traslación respecto al radio. El codigo hace z = T * theta (lineal), que contradice autosemejanza; por eso esta relación esta marcada EN CONFLICTO con el codigo y debe resolverse antes del paso B.
-- S (shape): forma de curva generadora. NO IMPLEMENTADO en generate_curve(); rango valido no confirmado.
-- Coordenadas: se asume sistema cilindrico (r, theta, z) con r exponencial. NO VERIFICADO.
+## Definiciones de parametros (reconstruccion parcial — NO VERIFICADA)
+
+Esto procede de docs/parametros-rau.md (archivo sin tilde) y de conocimiento general, NO lectura primaria:
+
+- W (whorl expansion rate): tasa de expansion por vuelta. NO VERIFICADO su definición exacta (por revolucion completa 2*pi? por unidad de angulo?).
+- D: distancia del eje relativa a la curva generadora. Rango sugerido 0 <= D < 1 en la documentacion, NO VERIFICADO con la fuente primaria.
+- T (translation): traslacion vertical. La relación propuesta por la fuente secundaria es proporcional al radio (autosemejanza); el código actual usa z = T*theta (lineal), que contradice la autosemejanza. Estado: EN CONFLICTO con el código y pendiente de verificacion primaria.
+- S (shape): forma de la curva generadora (circulo, elipse). NO IMPLEMENTADO en generate_curve(); rango válido no confirmado.
+- Sistema de coordenadas: se asume cilíndrico (r, theta, z) con r exponencial. NO VERIFICADO.
 
 ## Ecuaciones propuestas (NO VERIFICADAS — pendiente de fuente primaria)
 
-Ninguna ecuación se escribe completa: ninguna fuente primaria fue leida.
-Cuando se abran, insertar aqui con referencia exacta (articulo, figura, pagina):
+Ninguna ecuación se escribe completa porque ninguna fuente primaria fue leida. Cuando se abran, insertar aqui con referencia exacta (articulo, figura, pagina):
 
 1. Ecuacion de r(theta) con W.
-2. Relacion z(r) o z(theta) con T.
-3. Efecto de D en la geometría.
-4. Definicion de la curva generadora con S (circulo/elipse).
+2. Relacion z(r) o z(theta) con T (autosemejante vs lineal).
+3. Efecto de D en la geometria (distancia relativa al eje).
+4. Definicion de la curva generadora con S (circulo, elipse).
 
 ## Decisiones abiertas (Pedro debe confirmar antes del paso B)
 
-1. Confirmar que PNAS 1961 y Science 1965 son referencias de base, o indicar otra fuente primaria.
-2. Confirmar rango valido de D (doc dice 0 <= D < 1; es de Raup o interpretación posterior?).
-3. Confirmar si T debe ser relativo al radio (z proporciónal a r) para autosemejanza, o si el codigo lineal es el error.
-4. Confirmar si S acepta solo circle y ellipse, o mas formas en el articulo.
+1. Confirmar que JP 1966 es la fuente primaria para estas ecuaciones; si PNAS 1961 cubre una parte, marcar que parte corresponde a cada articulo.
+2. Confirmar rango válido de D (documentacion sugiere 0 <= D < 1; es interpretacion de Raup o posterior?).
+3. Confirmar si T debe ser proporcional al radio (autosemejanza) o si la formulacion lineal tiene alguna justificacion en Raup.
+4. Confirmar si S acepta solo circle y ellipse, o si hay mas formas descritas en la fuente primaria.
 
-> Este archivo NO debe considerarse fuente valida para escribir src/model.py.
-> El paso B no debe arrancar hasta que al menos las ecuaciónes 1-3 tengan referencia primaria verificada.
+> Este archivo NO debe considerarse fuente valida para escribir src/model.py. El paso B no debe arrancar hasta que al menos las ecuaciones 1-3 tengan referencia primaria verificada.
