@@ -9,7 +9,7 @@ Implementación en Python del modelo geométrico de enrollamiento espiral. **Lic
 
 ## 🧭 ¿Cómo funciona? (para jóvenes curiosos)
 
-Imagina que tienes una curva generadora (como un círculo pequeño) y la haces girar alrededor de un eje, como si envolvieras un hilo alrededor de un lápiz. Cada vuelta, la curva se hace crece exponencialmente (`W` duplica el radio cada vuelta; con `W=2.0` por defecto no es 'un poquito'), se aleja un poco del eje (`D`) y sube un poquito (`T`). ¡Así nace cualquier concha espiral!
+Imagina que tienes una curva generadora (como un círculo pequeño) y la haces girar alrededor de un eje, como si envolvieras un hilo alrededor de un lápiz. Cada vuelta, la curva crece exponencialmente (`W` duplica el radio cada vuelta; con `W=2.0` por defecto no es 'un poquito'), se aleja un poco del eje (`D`) y sube un poquito (`T`). ¡Así nace cualquier concha espiral!
 
 ![Espiral de concha con los parámetros W, D y T marcados](assets/concha-espiral.svg)
 
