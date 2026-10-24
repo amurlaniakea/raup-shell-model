@@ -1,10 +1,9 @@
-<!-- SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com> -->
-<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
-
 ---
 title: Modelo Geométrico de Raup — Parámetros
 date: 2026-10-23
 ---
+<!-- SPDX-FileCopyrightText: 2026 Pedro Sordo Martínez <amurlaniakea@gmail.com> -->
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
 
 ## Parámetros del modelo (Raup, 1961)
 
