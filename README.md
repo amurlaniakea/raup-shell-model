@@ -1,16 +1,37 @@
-# Modelo Geométrico
+# Modelo Geométrico 🐚 — Modelo de enrollamiento espiral (Raup, 1961-1966)
 
-> Autor: Pedro Sordo Martínez <amurlaniakea@gmail.com> | Licencia AGPL-3.0 de Conchas — David M. Raup
+> **¡Hola, explorador!** Este código reproduce la forma de las conchas de caracoles y amonites usando solo cuatro números: **W**, **D**, **T** y **S**. Es el mismo truco matemático que usó el paleontólogo David M. Raup en los años 60.
 
-Implementación del modelo geométrico de enrollamiento espiral (Raup, 1961-1972) con parámetros `W`, `D`, `T`, `S`.
+Implementación en Python del modelo geométrico de enrollamiento espiral. **Licencia:** AGPL-3.0-or-later. Ver [LICENSE](LICENSE).
 
-## Estructura
-- `docs/` — Resúmenes y referencias
-- `src/` — Modelo geométrico en Python
-- `data/` — Datos de muestra
-- `notebooks/` — Ejemplos reproducibles
+## 🧭 ¿Cómo funciona? (para jóvenes curiosos)
 
-## Referencias principales
+Imagina que tienes una curva generadora (como un círculo pequeño) y la haces girar alrededor de un eje, como si envolvieras un hilo alrededor de un lápiz. Cada vuelta, la curva se hace un poquito más grande (`W`), se aleja un poco del eje (`D`) y sube un poquito (`T`). ¡Así nace cualquier concha espiral!
+
+![Espiral de concha con los parámetros W, D y T marcados](assets/concha-espiral.svg)
+
+- **W** = expansión (`whorl expansion rate`) → la concha crece más rápido.
+- **D** = distancia al eje → qué tan "abierta" está la espiral.
+- **T** = traslación (`translation`) → cuánto sube por cada giro, como una escalera de caracol.
+- **S** = forma de la curva generadora → círculo, elipse, etc.
+
+> **⚠️ ADVERTENCIA:** Modelo teórico para fines educativos. No sustituye análisis paleontológicos ni geológicos profesionales.
+
+## 📧 Contacto
+
+- **Autor**: Pedro Sordo Martínez
+- **e-mail**: amurlaniakea@gmail.com
+- **Hugging Face**: [MagoPredator](https://huggingface.co/MagoPredator)
+
+## 📂 Estructura del proyecto
+
+- `docs/` — Resúmenes y referencias bibliográficas
+- `src/` — Modelo geométrico (`model.py`)
+- `tests/` — Pruebas con `pytest`
+- `assets/` — Dibujos explicativos
+
+## 📚 Referencias principales
+
 - Raup, D. M. (1961). The Geometry of Coiling in Gastropods. *PNAS*.
-- Raup, D. M. (1965). Theoretical Morphology of the Coiled Shell. *Science* (con Michelson).
+- Raup, D. M. (1965). Theoretical Morphology of the Coiled Shell. *Science*.
 - Raup, D. M. (1966). Geometric analysis of shell coiling; general problems. *Journal of Paleontology*.
