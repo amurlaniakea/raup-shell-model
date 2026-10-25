@@ -11,7 +11,9 @@ Implementación en Python del modelo geométrico de enrollamiento espiral. **Lic
 
 Imagina que tienes una curva generadora (como un círculo pequeño) y la haces girar alrededor de un eje, como si envolvieras un hilo alrededor de un lápiz. Cada vuelta, la curva crece exponencialmente (`W` multiplica el radio por `W` en cada vuelta; con `W=2.0`, el valor por defecto, lo duplica, así que no es 'un poquito'), se aleja un poco del eje (`D`) y sube un poquito (`T`). ¡Así nace cualquier concha espiral!
 
-> La figura explicativa anterior (`assets/concha-espiral.svg`) se retiró del README: sus valores no se generaban con este código. Se regenerará desde el modelo.
+![Tres conchas generadas con el modelo: vista superior y corte sagital de cada una](assets/concha-espiral.svg)
+
+*Figura generada con `scripts/render_figures.py` a partir de `src/model.py` (no dibujada a mano). Arriba, la vista superior; abajo, el corte sagital en θ = 0 con las tres primeras aperturas. «Clásica» y «Torre alta» tienen vueltas que se solapan; «Planispiral abierta» no (según `whorl_overlap`).*
 
 - **W** = expansión (`whorl expansion rate`) → la concha crece más rápido.
 - **D** = distancia al eje → qué tan "abierta" está la espiral.
@@ -26,7 +28,7 @@ Imagina que tienes una curva generadora (como un círculo pequeño) y la haces g
 ¿Quieres **ver** conchas en 3D sin escribir código? Hay un visor incluido.
 
 ```bash
-pip install matplotlib numpy
+pip install -e ".[viz]"
 
 python scripts/visualizar.py              # galería de 6 morfologías
 python scripts/visualizar.py --clasica    # caracol clásico
@@ -54,7 +56,8 @@ pendiente de contraste con Raup (1966).
 - `docs/` — Resúmenes y referencias bibliográficas
 - `src/` — Modelo geométrico (`model.py`)
 - `tests/` — Pruebas con `pytest`
-- `assets/` — Dibujos explicativos
+- `assets/` — Figuras (generadas desde el modelo)
+- `scripts/` — `render_figures.py` (figura del README, sin dependencias) y `visualizar.py` (visor 3D)
 
 ## Que puedes explorar
 
@@ -62,7 +65,7 @@ pendiente de contraste con Raup (1966).
 - Cambiar **D** para abrir o cerrar la distancia al eje (D=0 toca el eje).
 - Cambiar **T** para subir la espiral como una escalera de caracol (autosemejanza z = T*r).
 - Cambiar **S** (`circle` o `ellipse`) y **rho** para modificar la forma de la apertura.
-- Ejecutar `python scripts/render_readme_banner.py` para regenerar la imagen principal.
+- Ejecutar `python scripts/render_figures.py` para regenerar la figura del README (`--check` comprueba que está al día) o `python scripts/visualizar.py` para verlas en 3D.
 
 ## Matematica del modelo
 
@@ -82,54 +85,20 @@ Solapamiento (S8): T**2 < rho**2 * [((1-D)/(1+D))**2*(W+1)**2 - (W-1)**2] / (W-1
 
 - **Paso A (higiene):** completado (licencia AGPL-3.0-or-later, cabeceras SPDX, CITATION.cff).
 - **Paso B (modelo):** implementado y saneado (`generate_curve`, `generate_shell`, `whorl_overlap`, `mesh_shell`), con validación completa de entradas, malla sin caras degeneradas y tapas opcionales (`cap_ends=True`).
-- **Paso C (mesh/visual):** iniciado (`mesh_shell`, `export_to_stl`, banner generado).
+- **Paso C (mesh/visual):** iniciado (`mesh_shell`, `export_to_stl`, figura generada desde el modelo y visor 3D).
 - **Paso D (verificacion):** pendiente contraste con fuente primaria Raup (1966) y auditoria con Claude.
   Nota: el modelo usa la formulacion secundaria de Filin 2026 (S3-S8); NO ha sido contrastada completamente con Raup (1966, J. Paleontol. 40(5):1178-1190) ni validada contra sus figuras originales.
 
-- **CI:** `.github/workflows/ci.yml` (ruff + pytest en Python 3.11-3.13, con y sin `trimesh`). Instalación: `pip install -e ".[dev]"`; extras: `.[mesh]` (STL) y `.[viz]` (banner).
+- **CI:** `.github/workflows/ci.yml` (ruff + pytest en Python 3.11-3.13, con y sin `trimesh`). Instalación: `pip install -e ".[dev]"`; extras: `.[mesh]` (STL) y `.[viz]` (visor 3D).
 
-## Visualizacion
-
-El script genera una vista de ejemplo (`assets/readme_banner.png`, borrador en revisión; no incrustada en este README) con el modelo propio:
+## Figura del README
 
 ```bash
-python scripts/render_readme_banner.py
+python scripts/render_figures.py          # regenera assets/concha-espiral.svg (sin dependencias)
+python scripts/render_figures.py --check  # falla si la figura no coincide con el modelo
 ```
 
-## 🖼️ Visualización Rápida
-
-El repositorio incluye un script de visualización para ver las conchas en 3D sin necesidad de programar.
-
-### Requisitos
-
-```bash
-pip install matplotlib numpy
-```
-
-### Uso rápido
-
-```bash
-# Galería de 6 morfologías (ventana interactiva)
-python scripts/visualizar.py
-
-# Solo una concha específica
-python scripts/visualizar.py --clasica    # Concha clásica de caracol
-python scripts/visualizar.py --torre      # Torre alta elongada
-python scripts/visualizar.py --plana      # Planispiral (ammonites)
-
-# Guardar como PNG sin abrir ventana
-python scripts/visualizar.py --guardar
-python scripts/visualizar.py --clasica --guardar
-```
-
-### ¿Qué verás?
-
-Una ventana interactiva donde puedes:
-- 🖱️ **Arrastrar** para rotar la concha en 3D
-- 🔍 **Scroll** para hacer zoom
-- 💾 **Botón guardar** para exportar como PNG
-
-> **Nota en WSL:** Si la ventana no se abre, usa `--guardar` y abre el PNG con `explorer.exe nombre_archivo.png`.
+La figura sale de `generate_curve`, `generate_shell` y `whorl_overlap`; si cambias el modelo y no la regeneras, los tests fallan. Es un SVG que se adapta al tema claro u oscuro. El visor 3D de arriba es interactivo y necesita `matplotlib`.
 
 ## 📚 Referencias principales
 

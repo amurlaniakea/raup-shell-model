@@ -28,7 +28,7 @@ jobs:
         run: mypy src
       - name: Tests sin trimesh (los de malla se omiten)
         run: pytest -q
-      - name: Tests con trimesh
+      - name: Tests con trimesh y matplotlib
         run: |
-          pip install -e ".[mesh]"
+          pip install -e ".[mesh,viz]"
           pytest -q
