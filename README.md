@@ -86,7 +86,7 @@ Solapamiento (S8): T**2 < rho**2 * [((1-D)/(1+D))**2*(W+1)**2 - (W-1)**2] / (W-1
 - **Paso A (higiene):** completado (licencia AGPL-3.0-or-later, cabeceras SPDX, CITATION.cff).
 - **Paso B (modelo):** implementado y saneado (`generate_curve`, `generate_shell`, `whorl_overlap`, `mesh_shell`), con validación completa de entradas, malla sin caras degeneradas y tapas opcionales (`cap_ends=True`).
 - **Paso C (mesh/visual):** iniciado (`mesh_shell`, `export_to_stl`, figura generada desde el modelo y visor 3D).
-- **Paso D (verificacion):** pendiente contraste con fuente primaria Raup (1966) y auditoria con Claude.
+- **Paso D (verificacion):** pendiente contraste con fuente primaria Raup (1966) y auditoría externa.
   Nota: el modelo usa la formulacion secundaria de Filin 2026 (S3-S8); NO ha sido contrastada completamente con Raup (1966, J. Paleontol. 40(5):1178-1190) ni validada contra sus figuras originales.
 
 - **CI:** `.github/workflows/ci.yml` (ruff + pytest en Python 3.11-3.13, con y sin `trimesh`). Instalación: `pip install -e ".[dev]"`; extras: `.[mesh]` (STL) y `.[viz]` (visor 3D).
